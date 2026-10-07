@@ -1,0 +1,134 @@
+        <div class="page" id="page-employees">
+          <div class="tabs">
+            <div class="tab active" onclick="showEmpTab('list',this)" data-i18n="empListTab">Employees</div>
+            <div class="tab" onclick="showEmpTab('debts',this)" data-i18n="empDebtsTab">Debts / Advances</div>
+            <div class="tab" data-perm="canPaySalaries" onclick="showEmpTab('salary',this)" data-i18n="empSalaryTab"><span
+                data-i18n="paySalaryBtn">Pay Salary</span></div>
+            <div class="tab" onclick="showEmpTab('perf',this)">Performance</div>
+          </div>
+          <div id="empTab-list">
+            <div class="form-panel">
+              <div class="form-panel-title" id="empFormTitle" data-i18n="addEmpTitle">Add Employee</div>
+              <div class="form-row cols-3">
+                <div class="form-group"><label class="form-label" data-i18n="fullName"><span data-i18n="fullName">Full
+                      Name *</span></label><input class="form-input" id="empName" /></div>
+                <div class="form-group"><label class="form-label" data-i18n="position"><span
+                      data-i18n="positionLabel">Position</span></label><input class="form-input" id="empPosition"
+                    data-i18n-ph="positionPh" placeholder="Bartender, Waiter…" data-i18n-ph="positionPh" /></div>
+                <div class="form-group"><label class="form-label" data-i18n="phone"><span
+                      data-i18n="phoneLabel">Phone</span></label><input class="form-input" id="empPhone"
+                    placeholder="07…" /></div>
+              </div>
+              <div class="form-row cols-3">
+                <div class="form-group"><label class="form-label" data-i18n="monthlySalary"><span
+                      data-i18n="monthlySalary">Monthly Salary (RWF)</span></label><input type="number"
+                    class="form-input" id="empSalary" value="0" min="0" /></div>
+                <div class="form-group"><label class="form-label">BarMS account (login)</label>
+                  <select class="form-input" id="empUser"><option value="">— No account —</option></select>
+                  <div style="font-size:11px;color:var(--muted);margin-top:3px">Link it so this employee's sales and work are tracked automatically</div></div>
+                <div class="form-group" style="display:flex;align-items:flex-end;gap:8px">
+                  <button class="btn btn-primary" onclick="saveEmployee()" data-i18n="saveEmpBtn"><span
+                      data-i18n="saveEmpBtn">Save Employee</span></button>
+                  <button class="btn btn-ghost" onclick="clearEmpForm()" data-i18n="clearBtn">✕ Clear</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px"><span data-i18n="allEmployees">All Employees</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="name">Name</th>
+                      <th data-i18n="position"><span data-i18n="positionLabel">Position</span></th>
+                      <th data-i18n="phone"><span data-i18n="phoneLabel">Phone</span></th>
+                      <th data-i18n="monthlySalary">Monthly Salary</th>
+                      <th data-i18n="hireDate">Hire Date</th>
+                      <th>BarMS account</th>
+                      <th data-i18n="actions">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="empListBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div id="empTab-debts" style="display:none">
+            <div class="form-panel">
+              <div class="form-panel-title" data-i18n="recordDebtTitle"><span data-i18n="recordDebtTitle">Record Debt
+                  / Advance</span></div>
+              <div class="form-row cols-3">
+                <div class="form-group"><label class="form-label" data-i18n="employee">Employee</label><select
+                    class="form-input" id="debtEmp"></select></div>
+                <div class="form-group"><label class="form-label" data-i18n="amountRWF">Amount (RWF)</label><input
+                    type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="debtAmount" value="0" min="0" /></div>
+                <div class="form-group"><label class="form-label" data-i18n="note">Note</label><input class="form-input"
+                    id="debtNote" data-i18n-ph="debtNotePh" placeholder="Advance, loan…" data-i18n-ph="debtNotePh" />
+                </div>
+              </div>
+              <button class="btn" style="background:var(--orange);color:#fff" onclick="saveDebt()"
+                data-i18n="recordDebtBtn"><span data-i18n="recordDebtBtn">Record Debt</span></button>
+            </div>
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px"><span data-i18n="debtHistory">Debt History</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="employee">Employee</th>
+                      <th data-i18n="amount">Amount</th>
+                      <th data-i18n="note">Note</th>
+                      <th data-i18n="date">Date</th>
+                      <th data-i18n="status">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="debtListBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div id="empTab-perf" style="display:none">
+            <div class="ar-filters">
+              <select class="form-input" id="perfEmp" style="width:auto;min-width:200px" onchange="loadEmpPerformance()"></select>
+              <div class="ar-presets" id="perfPresets"></div>
+            </div>
+            <div id="perfContent"></div>
+          </div>
+          <div id="empTab-salary" style="display:none">
+            <div class="form-panel">
+              <div class="form-panel-title" data-i18n="paySalaryTitle">Pay Salary</div>
+              <div class="form-row cols-3">
+                <div class="form-group"><label class="form-label" data-i18n="employee">Employee</label><select
+                    class="form-input" id="payEmp" onchange="onPayEmpChange()"></select></div>
+                <div class="form-group"><label class="form-label" data-i18n="amountRWF">Amount (RWF)</label><input
+                    type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="payAmount" value="0" min="0" /></div>
+                <div class="form-group"><label class="form-label" data-i18n="note">Note</label><input class="form-input"
+                    id="payNote" data-i18n-ph="payNotePh" placeholder="April salary, bonus…" data-i18n-ph="payNotePh" />
+                </div>
+              </div>
+              <button class="btn btn-green" onclick="paySalary()" data-i18n="paySalaryBtn">Pay Salary</button>
+            </div>
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px"><span data-i18n="salaryHistory">Salary Payment
+                  History</span></div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="employee">Employee</th>
+                      <th data-i18n="netPaid">Net Paid</th>
+                      <th data-i18n="deductions">Deductions</th>
+                      <th data-i18n="note">Note</th>
+                      <th data-i18n="date">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="salaryHistoryBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS -->

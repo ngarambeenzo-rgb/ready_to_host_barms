@@ -1,0 +1,35 @@
+<div class="page" id="page-kitchen-ingredients">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Ingredients</div>
+      <div class="page-sub">Kitchen stock management</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button data-perm="canEditStock" class="btn btn-ghost btn-sm" onclick="showAddStockModal()">Receive Stock</button>
+      <button data-perm="canEditStock" class="btn btn-ghost btn-sm" onclick="showWasteModal()">Record Waste</button>
+      <button data-perm="canManageItems" class="btn btn-primary btn-sm" onclick="showAddIngredientModal()">+ Add Ingredient</button>
+    </div>
+  </div>
+
+  <div id="kiIngValueBox" class="stock-value-box"></div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--bg);border-bottom:2px solid var(--border)">
+          <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Ingredient</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Quantity</th>
+          <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Unit</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Cost/Unit</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Stock Value</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Min Stock</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Status</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="kiIngBody">
+        <tr><td colspan="8" style="padding:40px;text-align:center;color:var(--muted)"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading…</span></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

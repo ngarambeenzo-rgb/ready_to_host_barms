@@ -1,0 +1,86 @@
+        <div class="page" id="page-stock">
+          <div class="form-panel">
+            <div class="form-panel-title">STOCK REPLENISHMENT — Record New Purchase / Movement</div>
+            <div class="form-row cols-4">
+              <div class="form-group" style="grid-column:1/3">
+                <label class="form-label">Product *</label>
+                <select class="form-input" id="stockProduct" onchange="onStockProductChange()"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Movement Type</label>
+                <select class="form-input" id="stockType" onchange="onStockTypeChange()">
+                  <option value="IN">IN — Add / Purchase Stock</option>
+                  <option value="OUT">OUT — Remove / Use Stock</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Current Stock</label>
+                <div style="padding:10px 13px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border);font-weight:700;font-size:14px;color:var(--green)" id="stockCurrentInfo">—</div>
+              </div>
+            </div>
+            <div class="form-row cols-4">
+              <div class="form-group">
+                <label class="form-label">Quantity *</label>
+                <input type="number" inputmode="numeric" class="form-input" id="stockQty" value="1" min="1" oninput="updateStockPreview()"/>
+              </div>
+              <div class="form-group" id="stockCostGroup">
+                <label class="form-label">Buying Price / Unit (RWF)</label>
+                <input type="number" inputmode="numeric" class="form-input" id="stockCost" value="0" min="0" oninput="updateStockPreview()"/>
+                <div style="font-size:11px;color:var(--muted);margin-top:3px" id="stockTotalCostInfo"></div>
+              </div>
+              <div class="form-group" id="stockSupplierGroup">
+                <label class="form-label">Supplier (optional)</label>
+                <input class="form-input" id="stockSupplier" placeholder="e.g. Bralirwa, local market..."/>
+              </div>
+              <div class="form-group" id="stockReferenceGroup">
+                <label class="form-label">Reference No. (optional)</label>
+                <input class="form-input" id="stockReference" placeholder="e.g. INV-2024-001"/>
+              </div>
+            </div>
+            <div class="form-row cols-4">
+              <div class="form-group">
+                <label class="form-label">Purchase / Movement Date *</label>
+                <input type="date" class="form-input" id="stockDate"/>
+              </div>
+              <div class="form-group" style="grid-column:2/5">
+                <label class="form-label">Note / Reason</label>
+                <input class="form-input" id="stockNote" placeholder="e.g. Weekly restock from Bralirwa supplier..."/>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-primary" onclick="recordStock()">RECORD MOVEMENT</button>
+              <div id="stockPreview" style="font-size:13px;color:var(--muted)"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span data-i18n="stockOverviewTitle">Stock Overview — Summary & Recent
+                  Movements</span></div>
+              <input class="form-input" style="width:200px;padding:7px 12px" data-i18n-ph="searchProductPh"
+                placeholder="Search product…" data-i18n-ph="searchProductPh" oninput="filterStockTable(this.value)"
+                id="stockSearchInput" />
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="product">Product</th>
+                    <th data-i18n="category"><span data-i18n="category">Category</span></th>
+                    <th data-i18n="currentStock">Current Stock</th>
+                    <th>Buy Cost / Unit</th>
+                    <th>Current Stock Value</th>
+                    <th>▲ <span data-i18n="totalIn">Total IN</span></th>
+                    <th>▼ <span data-i18n="totalOut">Total OUT</span></th>
+                    <th data-i18n="unit">Unit</th>
+                    <th data-i18n="level">Level</th>
+                    <th data-i18n="lastMovement">Last Movement</th>
+                    <th data-i18n="lastDate">Last Date</th>
+                  </tr>
+                </thead>
+                <tbody id="stockSummaryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRODUCTS -->

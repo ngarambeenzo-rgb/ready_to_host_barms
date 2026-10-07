@@ -1,0 +1,31 @@
+<div class="page" id="page-advanced-reports">
+  <div class="ar-head">
+    <div>
+      <div class="ar-print-title" id="arPrintTitle"></div>
+      <div class="page-title">Advanced Reports</div>
+      <div class="page-sub" id="arPeriodLabel">Business performance, stock value and profitability</div>
+    </div>
+    <div class="ar-head-actions">
+      <button class="btn btn-primary btn-sm" onclick="arPrintFullReport()" title="The whole report as a professional document — print it or choose “Save as PDF”">Full report (PDF / Print)</button>
+      <button class="btn btn-ghost btn-sm" onclick="arDownloadWorkbook()" title="The whole report as an Excel file, one sheet per section">Excel workbook</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="ar-filters">
+    <div class="ar-presets" id="arPresets"></div>
+    <div class="ar-custom" id="arCustom">
+      <input type="date" class="form-input" id="arFrom"/>
+      <span>→</span>
+      <input type="date" class="form-input" id="arTo"/>
+      <button class="btn btn-primary btn-sm" onclick="arApplyCustom()">Apply</button>
+    </div>
+    <div class="ar-scope" id="arScope"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="ar-tabs" id="arTabs" role="tablist"></div>
+
+  <div id="arNotice"></div>
+  <div id="arContent" class="ar-content"></div>
+</div>

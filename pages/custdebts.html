@@ -1,0 +1,69 @@
+        <div class="page" id="page-custdebts">
+          <div class="form-panel">
+            <div class="form-panel-title" data-i18n="recordDebtCustTitle"><span data-i18n="recordDebtCustTitle">
+                Record Customer Debt</span></div>
+            <div class="form-row cols-4">
+              <div class="form-group"><label class="form-label" data-i18n="customerName">Customer Name *</label><input
+                  class="form-input" id="cdName" data-i18n-ph="customerNamePh" placeholder="e.g. Jean Paul…"
+                  data-i18n-ph="customerNamePh" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="phoneOptional">Phone (optional)</label><input
+                  class="form-input" id="cdPhone" placeholder="07…" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="amountOwed">Amount Owed (RWF) *</label><input
+                  type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="cdAmount" value="0" min="0" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="date">Date</label><input type="date"
+                  class="form-input" id="cdDate" /></div>
+            </div>
+            <div class="form-row cols-2">
+              <div class="form-group"><label class="form-label" data-i18n="descriptionItems">Description / Items
+                  Taken</label><input class="form-input" id="cdDesc" data-i18n-ph="descItemsPh"
+                  placeholder="e.g. 3 Primus + 1 Nyama Choma…" data-i18n-ph="descItemsPh" /></div>
+              <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-primary"
+                  onclick="saveCustDebt()" data-i18n="recordDebtBtn2"><span data-i18n="recordDebtBtn2">RECORD
+                    DEBT</span></button></div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span data-i18n="unpaidDebts">Unpaid Debts</span></div><span
+                  class="badge badge-red" id="cdUnpaidTotal">RWF 0</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="customer">Customer</th>
+                      <th data-i18n="phone"><span data-i18n="phoneLabel">Phone</span></th>
+                      <th data-i18n="amount">Amount</th>
+                      <th data-i18n="date">Date</th>
+                      <th data-i18n="items">Items</th>
+                      <th data-i18n="action">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cdUnpaidBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span data-i18n="paidDebts">Paid Debts</span></div><span
+                  class="badge badge-green" id="cdPaidTotal">RWF 0</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="customer">Customer</th>
+                      <th data-i18n="amount">Amount</th>
+                      <th data-i18n="debtDate">Debt Date</th>
+                      <th data-i18n="paidDate">Paid Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cdPaidBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VOID REQUESTS -->

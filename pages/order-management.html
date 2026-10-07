@@ -1,0 +1,71 @@
+<div class="page" id="page-order-management">
+  <!-- Header -->
+  <div class="om-head">
+    <button onclick="omBack()" class="btn btn-ghost btn-sm om-back" aria-label="Back"><i data-ic="arrowleft"></i><span>Back</span></button>
+    <div class="om-head-text">
+      <div class="om-title-row">
+        <h1 class="page-title" id="omOrderTitle">Order Management</h1>
+        <span id="omStatusBadge" class="om-chip draft">Draft</span>
+      </div>
+      <div class="page-sub" id="omOrderSub">Order details</div>
+    </div>
+  </div>
+
+  <div class="om-layout" id="omLayout">
+    <!-- LEFT: Products -->
+    <section class="om-catalog" aria-label="Products">
+      <div class="om-tools">
+        <label class="om-search"><i data-ic="search"></i>
+          <input class="form-input" id="omProductSearch" placeholder="Search products" oninput="omFilterProducts(this.value)" autocomplete="off"/>
+        </label>
+        <div class="tabs om-cats" role="tablist" id="omCatTabs">
+          <button class="tab active" data-cat="" onclick="omSetCategory('',this)">All</button>
+          <button class="tab" data-cat="Drink" onclick="omSetCategory('Drink',this)">Drinks</button>
+          <button class="tab" data-cat="Kitchen" onclick="omSetCategory('Kitchen',this)">Kitchen</button>
+        </div>
+        <select class="form-input" id="omCategoryFilter" onchange="omFilterProducts()" hidden>
+          <option value="">All Categories</option>
+          <option value="Drink">Drinks</option>
+          <option value="Kitchen">Kitchen</option>
+        </select>
+      </div>
+      <div id="omProductGrid" class="om-grid"></div>
+    </section>
+
+    <!-- RIGHT: Current order -->
+    <aside id="omRightPanel" class="om-cart" aria-label="Current order">
+      <div class="om-cart-head" onclick="omToggleCart()">
+        <div>
+          <div class="om-cart-title" id="omPanelTitle">Order</div>
+          <div class="om-cart-sub" id="omPanelSub"></div>
+        </div>
+        <span class="om-count" id="omItemCount">0 items</span>
+        <span class="om-cart-chev"><i data-ic="chevdown"></i></span>
+      </div>
+
+      <div class="om-note">
+        <i data-ic="pencil"></i>
+        <input class="form-input" id="omOrderNote" placeholder="Order note (optional)" onchange="omSaveNote()"/>
+      </div>
+
+      <!-- Items -->
+      <div id="omItemsList" class="om-lines"></div>
+
+      <!-- Routing preview -->
+      <div id="omRoutingPreview" class="om-route" style="display:none">
+        <div id="omBarItems" class="om-route-col"><div class="om-route-h"><i data-ic="beer"></i>Bar</div><div id="omBarItemsList">—</div></div>
+        <div id="omKitchenItems" class="om-route-col"><div class="om-route-h"><i data-ic="chef"></i>Kitchen</div><div id="omKitchenItemsList">—</div></div>
+      </div>
+
+      <!-- Total + action -->
+      <div class="om-cart-foot">
+        <div class="om-total-row">
+          <span>Total</span>
+          <span class="om-total" id="omTotal">RWF 0</span>
+        </div>
+        <button onclick="omValidateOrder()" id="omValidateBtn" class="btn btn-green btn-lg btn-block" disabled>Validate order</button>
+        <button onclick="omProceedToPayment()" id="omPayBtn" class="btn btn-primary btn-lg btn-block" style="display:none">Proceed to payment</button>
+      </div>
+    </aside>
+  </div>
+</div>

@@ -1,0 +1,68 @@
+        <div class="page" id="page-expenses">
+          <div class="form-panel">
+            <div class="form-panel-title"><span data-i18n="recordExpenseTitle">RECORD EXPENSE</span></div>
+            <div class="form-row cols-3">
+              <div class="form-group" style="grid-column:1/3"><label class="form-label" data-i18n="description"><span
+                    data-i18n="description">Description *</span></label><input class="form-input" id="expDesc"
+                  data-i18n-ph="expDescPh" placeholder="e.g. Electricity bill…" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="category">Category</label>
+                <select class="form-input" id="expCategory">
+                  <option data-i18n="catGeneral">General</option>
+                  <option data-i18n="catUtilities">Utilities</option>
+                  <option data-i18n="catCleaning">Cleaning</option>
+                  <option data-i18n="catTransport">Transport</option>
+                  <option data-i18n="catFoodKitchen">Food/Kitchen</option>
+                  <option data-i18n="catMaintenance">Maintenance</option>
+                  <option data-i18n="catMarketing">Marketing</option>
+                  <option data-i18n="catSecurity">Security</option>
+                  <option data-i18n="catOther">Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row cols-4">
+              <div class="form-group"><label class="form-label" data-i18n="amountRWF"><span data-i18n="amountRWF">Amount
+                    (RWF) *</span></label><input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="expAmount" value="0" min="0" />
+              </div>
+              <div class="form-group"><label class="form-label">Paid with *</label>
+                <select class="form-input" id="expMethod">
+                  <option value="Cash">Cash (from the drawer)</option>
+                  <option value="MoMo">MoMo</option>
+                  <option value="Card">Card</option>
+                  <option value="Bank">Bank</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label" data-i18n="date">Date</label><input type="date"
+                  class="form-input" id="expDate" /></div>
+              <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn"
+                  style="background:var(--orange);color:#fff;width:100%;justify-content:center;padding:11px"
+                  onclick="saveExpense()" data-i18n="recordExpenseBtn"><span data-i18n="recordExpenseBtn">RECORD
+                    EXPENSE</span></button></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span data-i18n="expenseHistory"><span data-i18n="expenseHistory">Expense
+                    History</span></span></div>
+              <div style="font-size:13px;font-weight:700;color:var(--red)"><span data-i18n="totalThisMonth">Total this
+                  month:</span> <span id="expMonthTotal" class="mono">RWF 0</span></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="date">Date</th>
+                    <th data-i18n="description">Description</th>
+                    <th data-i18n="category">Category</th>
+                    <th data-i18n="amount">Amount</th>
+                    <th>Paid with</th>
+                    <th data-i18n="recordedBy">Recorded By</th>
+                    <th data-i18n="action">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="expensesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- KITCHEN -->

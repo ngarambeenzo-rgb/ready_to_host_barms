@@ -1,0 +1,151 @@
+        <div class="page" id="page-settings">
+          <div class="grid-2">
+            <div class="form-panel" id="barConfigPanel">
+              <div class="form-panel-title" data-i18n="barConfigTitle"><span data-i18n="barConfigTitle">Bar
+                  Configuration</span></div>
+              <div class="form-group"><label class="form-label" data-i18n="barName"><span data-i18n="barName">Bar
+                    Name</span></label><input class="form-input" id="setBarName" value="BarMS Pro" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="location"><span
+                    data-i18n="location">Location</span></label><input class="form-input" id="setLocation"
+                  value="Kigali, Rwanda" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="currency"><span
+                    data-i18n="currency">Currency</span></label><input class="form-input" id="setCurrency"
+                  value="RWF" /></div>
+              <button class="btn btn-primary" onclick="saveSettings()" data-i18n="saveSettingsBtn"><span
+                  data-i18n="saveSettingsBtn">Save Settings</span></button>
+            </div>
+            <div class="form-panel" id="userMgmtPanel">
+              <div class="form-panel-title">User Management</div>
+              <button class="btn btn-green" style="margin-bottom:14px" onclick="showAddUserModal()">Add New
+                User</button>
+              <div class="card" style="padding:14px">
+                <div class="card-title" style="margin-bottom:10px;font-size:12px">Users</div>
+                <div id="usersList"></div>
+              </div>
+            </div>
+            <div id="addUserModal"
+              style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+              <div
+                style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+                <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:20px">Add New User</div>
+                <div style="margin-bottom:12px"><label
+                    style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">FULL NAME
+                    *</label><input type="text" id="um_name" class="form-input" placeholder="e.g. John Doe"
+                    autocomplete="off" /></div>
+                <div style="margin-bottom:12px"><label
+                    style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">USERNAME
+                    *</label><input type="text" id="um_user" class="form-input" placeholder="lowercase, no spaces"
+                    autocomplete="off" /></div>
+                <div style="margin-bottom:12px"><label
+                    style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">PASSWORD
+                    *</label><input type="password" id="um_pass" class="form-input" placeholder="Min 4 characters"
+                    autocomplete="new-password" /></div>
+                <div style="margin-bottom:20px"><label
+                    style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">ROLE
+                    *</label><select id="um_role" class="form-input">
+                    <option value="Bartender">Bartender</option>
+                    <option value="Kitchen">Kitchen</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Owner">Owner</option>
+                  </select></div>
+                <div id="um_error"
+                  style="display:none;color:var(--red);font-size:12px;margin-bottom:12px;padding:8px 12px;background:var(--red-lt);border-radius:8px">
+                </div>
+                <div style="display:flex;gap:10px">
+                  <button id="um_submitBtn" class="btn btn-green" style="flex:1;justify-content:center"
+                    onclick="submitAddUser()">✓ Add User</button>
+                  <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="hideAddUserModal()">✕
+                    Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-panel" id="stockCountPanel">
+            <div class="form-panel-title">Stock count schedule <span style="font-size:11px;font-weight:400;color:var(--muted)">— Owner only</span></div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:12px">How often stock must be physically counted. When a count is overdue, the Owner and managers are reminded at login and Advanced Reports flags it.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+              <div class="form-group" style="margin:0"><label class="form-label">Count every</label>
+                <select class="form-input" id="setCountPreset" onchange="document.getElementById('setCountDays').value=this.value||document.getElementById('setCountDays').value;document.getElementById('setCountDaysWrap').style.display=this.value?'none':''">
+                  <option value="1">Every day</option><option value="7">Every week (7 days)</option><option value="14">Every 2 weeks</option><option value="30">Every month (30 days)</option><option value="">Custom…</option>
+                </select></div>
+              <div class="form-group" id="setCountDaysWrap" style="margin:0;display:none"><label class="form-label">Days</label>
+                <input type="number" class="form-input" id="setCountDays" min="1" max="90" value="7" style="width:90px"/></div>
+              <button class="btn btn-primary" onclick="saveStockCountInterval()">Save</button>
+            </div>
+          </div>
+          <div class="form-panel" id="discountPanel">
+            <div class="form-panel-title">Discounts <span style="font-size:11px;font-weight:400;color:var(--muted)">— Owner only</span></div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Choose the items that get a discount and how much. Staff cannot type their own discount — at payment they can only tick the discounts you set here, and only if you allow them below.</p>
+            <div class="disc-form">
+              <div class="form-group" style="margin:0"><label class="form-label">Name</label>
+                <input class="form-input" id="dsName" placeholder="e.g. Happy hour Primus"/></div>
+              <div class="form-group" style="margin:0"><label class="form-label">Item</label>
+                <select class="form-input" id="dsItem"></select></div>
+              <div class="form-group" style="margin:0"><label class="form-label">Discount</label>
+                <div class="disc-val"><input type="number" class="form-input" id="dsValue" min="1" step="1" placeholder="10"/>
+                  <select class="form-input" id="dsKind"><option value="percent">% off</option><option value="amount">RWF off each</option></select></div></div>
+              <button class="btn btn-primary" onclick="saveDiscountRule()">Add discount</button>
+            </div>
+            <div id="discountList" class="disc-list"></div>
+            <div class="disc-policy">
+              <label class="disc-switch"><input type="checkbox" id="dsBartenders" onchange="saveDiscountPolicy(this.checked)">
+                <span><b>Bartenders may apply these discounts</b><span class="form-hint" style="display:block;margin:2px 0 0">Managers use the "Give Discounts" permission below.</span></span></label>
+            </div>
+          </div>
+          <div class="form-panel" id="mgrPermPanel">
+            <div class="form-panel-title"><span data-i18n="mgrPermTitle">Manager Permissions</span> <span
+                style="font-size:11px;font-weight:400;color:var(--muted)" data-i18n="ownerOnly">— Owner only</span>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:16px" data-i18n="mgrPermNote">Control what
+              managers can access and do in the system.</p>
+            <div id="mgrPermList"></div>
+          </div>
+          <div class="form-panel">
+            <div class="form-panel-title" data-i18n="changePassTitle"><span data-i18n="changePassTitle">Change My
+                Password</span></div>
+            <div class="form-row cols-3">
+              <div class="form-group"><label class="form-label" data-i18n="currentPass"><span
+                    data-i18n="currentPass">Current Password</span></label><input type="password" class="form-input"
+                  id="pwdCurrent" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="newPass"><span data-i18n="newPass">New
+                    Password</span></label><input type="password" class="form-input" id="pwdNew" /></div>
+              <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-ghost"
+                  onclick="changePassword()" data-i18n="changePassBtn"><span data-i18n="changePassBtn">Change
+                    Password</span></button></div>
+            </div>
+          </div>
+          <div class="form-panel" id="backupPanel">
+            <div class="form-panel-title" data-i18n="backupTitle">Data Backup & Restore</div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:16px" data-i18n="backupNote">Makes a full backup
+              of every record of this business, checks it, and downloads it (.sql.gz). To restore it, import the file with phpMyAdmin.</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-green" onclick="backupData()" data-i18n="backupBtn">Back up now — download</button>
+            </div>
+            <div id="backupStatus" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
+          </div>
+          <!-- IMS & Storage — Owner Only (hidden by default) -->
+          <div id="ownerOnlySettings" style="display:none;margin-top:16px">
+            <div class="grid-2">
+              <!-- IMS License Settings -->
+              <div class="form-panel">
+                <div class="form-panel-title">IMS License Settings</div>
+                <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Your license information.</p>
+                <div id="imsSettingsPanel">
+                  <div style="text-align:center;padding:20px;color:var(--muted)"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading…</span></div></div>
+                </div>
+              </div>
+              <!-- Local Data & Storage -->
+              <div class="form-panel">
+                <div class="form-panel-title">Local Data & Storage</div>
+                <p style="font-size:12px;color:var(--muted);margin-bottom:14px">BarMS stores up to <strong>17 days</strong> of data locally.</p>
+                <div id="storageInfoPanel">
+                  <div style="text-align:center;padding:20px;color:var(--muted)"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading…</span></div></div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:12px">
+                  <button class="btn btn-ghost" onclick="purgeOldLocalData().then(()=>{renderStorageInfo('storageInfoPanel');toast('Old data purged ')})">Purge Old Data</button>
+                  <button class="btn btn-ghost" onclick="renderStorageInfo('storageInfoPanel')">Refresh</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- end page-settings -->

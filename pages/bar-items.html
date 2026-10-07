@@ -1,0 +1,44 @@
+<div class="page" id="page-bar-items">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Items</div>
+      <div class="page-sub">What you sell — Direct items and Recipe cocktails</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="loadBarItems()">Refresh</button>
+      <button data-perm="canManageItems" class="btn btn-primary btn-sm" onclick="showAddBarItemModal()">+ Add Item</button>
+    </div>
+  </div>
+
+  <!-- Total stock value -->
+  <div id="biItemsValueBox" class="stock-value-box"></div>
+
+  <!-- Filter tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <button onclick="filterBarItems('all',this)" class="bi-filter-btn active" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:7px 16px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700">All</button>
+    <button onclick="filterBarItems('direct',this)" class="bi-filter-btn" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 16px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted)">Direct</button>
+    <button onclick="filterBarItems('recipe',this)" class="bi-filter-btn" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 16px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted)">Recipe</button>
+    <input class="form-input" id="biSearch" placeholder="Search items..." oninput="filterBarItems(null,null,this.value)" style="width:200px;max-width:100%;padding:7px 12px;font-size:13px;flex:1;min-width:120px"/>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:600px">
+      <thead>
+        <tr style="background:var(--bg);border-bottom:2px solid var(--border)">
+          <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Item</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Type</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Price</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Buy Cost / Unit</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Stock</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Stock Value</th>
+          <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Recipe</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Status</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="biItemsBody">
+        <tr><td colspan="9" style="padding:40px;text-align:center;color:var(--muted)"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading…</span></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,71 @@
+        <div class="page" id="page-sales">
+          <div class="form-panel">
+            <div class="form-panel-title"><span data-i18n="recordSaleTitle">KUGURISHA — Record Sale</span></div>
+            <div class="form-row cols-3">
+              <div class="form-group" style="grid-column:1/3">
+                <label class="form-label" data-i18n="productLabel">Product / Igicuruzwa</label>
+                <select class="form-input" id="saleProduct" onchange="onSaleProductChange()"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" data-i18n="priceStock">Price & Stock</label>
+                <div
+                  style="padding:10px 13px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border)">
+                  <div style="font-size:13px;font-weight:700;color:var(--cyan)" id="salePriceInfo">—</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px" id="saleStockInfo">—</div>
+                </div>
+              </div>
+            </div>
+            <div class="form-row cols-3">
+              <div class="form-group">
+                <label class="form-label" data-i18n="quantityLabel">Quantity / Ingano</label>
+                <input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="saleQty" value="1" min="1" oninput="updateSaleTotal()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" data-i18n="totalLabel">Total / Amafaranga Yose</label>
+                <div
+                  style="padding:10px 13px;background:var(--gold-lt);border-radius:var(--r-sm);border:1px solid var(--gold-mid);font-size:18px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums"
+                  id="saleTotalDisplay">RWF 0</div>
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end">
+                <button class="btn btn-green" style="width:100%;justify-content:center;padding:11px"
+                  onclick="recordSale()" data-i18n="sellBtn">✓ KUGURISHA — SELL</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span data-i18n="salesHistoryTitle">Sales History / Ibyagurishijwe</span></div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <div class="tabs" style="margin-bottom:0">
+                  <div class="tab active" onclick="loadSalesHistory(0,this)" data-i18n="today">Today</div>
+                  <div class="tab" onclick="loadSalesHistory(1,this)" data-i18n="thisWeek">This Week</div>
+                  <div class="tab" onclick="loadSalesHistory(2,this)" data-i18n="thisMonth">This Month</div>
+                  <div class="tab" id="salesDateTab" onclick="activateSalesDatePicker(this)" data-i18n="pickDate2">
+                    Pick Date</div>
+                </div>
+                <div id="salesDateWrap" style="display:none;align-items:center;gap:8px">
+                  <input type="date" class="form-input" id="salesDatePick" style="width:170px;padding:7px 12px"
+                    onchange="loadSalesHistoryByDate()" />
+                </div>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="date"><span data-i18n="date">Date</span></th>
+                    <th data-i18n="product">Product</th>
+                    <th data-i18n="qty">Qty</th>
+                    <th data-i18n="unitPrice">Unit Price</th>
+                    <th data-i18n="total">Total</th>
+                    <th data-i18n="soldBy">Sold By</th>
+                    <th data-i18n="action">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="salesHistoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK SALE -->

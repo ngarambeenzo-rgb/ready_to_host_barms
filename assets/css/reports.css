@@ -1,0 +1,218 @@
+/* ═══════════════════════════════════════════════════
+   BARMS PRO — reports.css (Premium Executive Edition)
+═══════════════════════════════════════════════════ */
+
+/* ── WRAPPER ── */
+.rpt-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 40px;
+}
+
+/* ── KPI STRIP ── */
+.rpt-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 12px;
+}
+.rpt-kpi {
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #E2E8F0;
+  border-top-width: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.rpt-kpi-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748B;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.rpt-kpi-val {
+  font-size: 18px;
+  font-weight: 800;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: -.3px;
+  line-height: 1.2;
+}
+
+/* ── CARDS ── */
+.rpt-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+.rpt-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.rpt-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+/* ── BADGES ── */
+.rpt-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.rpt-badge-green  { background: #D1FAE5; color: #059669; }
+.rpt-badge-red    { background: #FEE2E2; color: #DC2626; }
+.rpt-badge-blue   { background: #DBEAFE; color: #2563EB; }
+.rpt-badge-orange { background: #FEF3C7; color: #D97706; }
+
+/* ── 2 COL GRID ── */
+.rpt-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ── SUMMARY ROWS ── */
+.rpt-summary-rows { margin-bottom: 16px; }
+.rpt-sum-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 13px;
+}
+.rpt-sum-row:last-child { border-bottom: none; }
+.rpt-sum-label { color: #475569; }
+.rpt-sum-val { font-weight: 700; font-family: 'DM Mono', monospace; font-size: 13px; }
+.rpt-sum-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0 4px;
+  border-top: 2px solid #0F172A;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+/* ── MARGIN BAR ── */
+.rpt-margin-bar { margin-top: 12px; }
+.rpt-margin-label { font-size: 12px; color: #64748B; margin-bottom: 6px; }
+.rpt-bar-track {
+  height: 6px;
+  background: #F1F5F9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.rpt-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .4s ease;
+}
+
+/* ── PRODUCT ROWS ── */
+.rpt-product-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F8FAFC;
+}
+.rpt-product-row:last-child { border-bottom: none; }
+.rpt-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1E3A8A;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.rpt-product-info { flex: 1; min-width: 0; }
+.rpt-product-name { font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rpt-product-bar-wrap { height: 4px; background: #E2E8F0; border-radius: 2px; overflow: hidden; }
+.rpt-product-bar { height: 100%; background: linear-gradient(90deg, #2563EB, #60A5FA); border-radius: 2px; }
+.rpt-product-stats { text-align: right; flex-shrink: 0; }
+.rpt-product-rev { font-size: 13px; font-weight: 700; color: #059669; font-family: 'DM Mono', monospace; }
+.rpt-product-qty { font-size: 11px; color: #94A3B8; margin-top: 2px; }
+
+/* ── RANK BADGES ── */
+.rpt-rank-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 11px;
+  color: #fff;
+}
+.rpt-rank-1 { background: #F59E0B; }
+.rpt-rank-2 { background: #94A3B8; }
+.rpt-rank-3 { background: #92400E; }
+.rpt-rank-n { background: #E2E8F0; color: #64748B; }
+
+/* ── TABLE ── */
+.rpt-table { width: 100%; border-collapse: collapse; }
+.rpt-table thead th {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748B;
+  text-align: left;
+  padding: 9px 12px;
+  background: #F8FAFC;
+  border-bottom: 2px solid #E2E8F0;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rpt-table tbody tr { border-bottom: 1px solid #F1F5F9; transition: background .1s; }
+.rpt-table tbody tr:last-child { border-bottom: none; }
+.rpt-table tbody tr:hover { background: #F8FAFC; }
+.rpt-table td { padding: 9px 12px; font-size: 13px; color: #0F172A; }
+.rpt-total-row td { font-weight: 800; background: #F8FAFC; border-top: 2px solid #E2E8F0; }
+.rpt-muted { color: #94A3B8 !important; font-size: 12px; }
+.rpt-empty { text-align: center; color: #94A3B8; padding: 20px 0; font-size: 13px; }
+.rpt-empty-cell { text-align: center; color: #94A3B8; padding: 20px; }
+.rpt-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-height: 320px; overflow-y: auto; }
+.rpt-table-scroll thead th { position: sticky; top: 0; z-index: 1; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .rpt-kpi-row { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .rpt-kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .rpt-grid-2 { grid-template-columns: 1fr; gap: 14px; }
+  .rpt-kpi-val { font-size: 15px; }
+  .rpt-card { padding: 14px; }
+}
+@media (max-width: 480px) {
+  .rpt-kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── 2026-10 design system pass: neutral figures, no tints, no mono ── */
+.rpt-kpi-row{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh-1)}
+.rpt-kpi{border:none;border-left:1px solid var(--border);border-radius:0;box-shadow:none;background:var(--surface);padding:14px 16px}
+.rpt-kpi:first-child{border-left:none}
+.rpt-kpi-label{font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted);margin-bottom:4px}
+.rpt-kpi-val{font-family:'DM Sans',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.02em;color:var(--text);font-variant-numeric:tabular-nums}
+.rpt-kpi.lead .rpt-kpi-label{color:var(--brand);font-weight:600}
+.rpt-kpi.pos .rpt-kpi-val{color:var(--ink-green)}
+.rpt-kpi.neg .rpt-kpi-val{color:var(--ink-red)}
+.rpt-sum-val,.rpt-product-rev{font-family:'DM Sans',sans-serif;font-variant-numeric:tabular-nums}
+.rpt-card{border-radius:var(--r);border-color:var(--border);box-shadow:var(--sh-1)}
+.rpt-product-bar{background:var(--brand)}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BarMS Pro — Staff Onboarding Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:#f0f0ff;padding:24px;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:20px}
+
+  .card{
+    width:380px;background:#fff;border-radius:20px;overflow:hidden;
+    box-shadow:0 8px 40px rgba(30,58,138,.15);
+    page-break-inside:avoid;
+  }
+
+  .card-header{
+    background:linear-gradient(135deg,#1E3A8A,#2563EB,#5B7CFA);
+    padding:24px 24px 20px;color:#fff;text-align:center;
+  }
+  .logo{font-size:40px;margin-bottom:8px}
+  .app-name{font-size:22px;font-weight:800;letter-spacing:-.3px}
+  .app-sub{font-size:11px;opacity:.75;margin-top:4px;letter-spacing:.05em}
+
+  .card-body{padding:24px}
+  .title{font-size:16px;font-weight:700;color:#1E3A8A;margin-bottom:16px;text-align:center}
+
+  .steps{display:flex;flex-direction:column;gap:14px}
+  .step{display:flex;align-items:flex-start;gap:12px}
+  .step-num{
+    width:32px;height:32px;border-radius:50%;
+    background:linear-gradient(135deg,#1E3A8A,#2563EB);
+    color:#fff;font-weight:800;font-size:14px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:0 4px 10px rgba(30,58,138,.3);
+  }
+  .step-content{}
+  .step-title{font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:2px}
+  .step-desc{font-size:12px;color:#6b7280;line-height:1.4}
+  .step-desc strong{color:#1E3A8A}
+
+  .divider{height:1px;background:#f3f4f6;margin:16px 0}
+
+  .android-steps,.ios-steps{margin-bottom:16px}
+  .platform-title{font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .platform-steps{display:flex;flex-direction:column;gap:6px}
+  .platform-step{font-size:12px;color:#374151;display:flex;align-items:center;gap:8px}
+  .platform-step::before{content:'';width:6px;height:6px;border-radius:50%;background:#2563EB;flex-shrink:0}
+
+  .url-box{
+    background:#EEF2FF;border-radius:12px;padding:12px 16px;
+    border:2px dashed #818CF8;text-align:center;margin:16px 0;
+  }
+  .url-label{font-size:10px;font-weight:700;color:#6366F1;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+  .url-text{font-size:16px;font-weight:800;color:#1E3A8A;word-break:break-all}
+
+  .tip-box{
+    background:#FFF7ED;border-radius:12px;padding:12px 14px;
+    border-left:4px solid #F59E0B;
+  }
+  .tip-box p{font-size:12px;color:#92400E;line-height:1.5}
+  .tip-box strong{color:#B45309}
+
+  .footer{
+    background:#F8FAFF;border-top:1px solid #E5E7EB;
+    padding:14px 24px;text-align:center;
+  }
+  .footer p{font-size:11px;color:#9CA3AF}
+  .footer strong{color:#1E3A8A}
+
+  @media print {
+    body{background:#fff;padding:0}
+    .card{box-shadow:none;border:1px solid #e5e7eb;margin:0 auto}
+  }
+</style>
+</head>
+<body>
+
+<!-- ANDROID CARD -->
+<div class="card">
+  <div class="card-header">
+    <div class="logo">🍺</div>
+    <div class="app-name">BarMS Pro</div>
+    <div class="app-sub">Bar Management System — Rwanda 🇷🇼</div>
+  </div>
+  <div class="card-body">
+    <div class="title">📱 How to install on Android</div>
+
+    <div class="url-box">
+      <div class="url-label">Your bar's link</div>
+      <div class="url-text" id="androidUrl">chezpatrick.barms.rw</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">Open Chrome browser</div>
+          <div class="step-desc">Make sure you're using <strong>Google Chrome</strong> — not another browser</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">Type your bar's link</div>
+          <div class="step-desc">Type <strong>chezpatrick.barms.rw</strong> in the address bar and press Enter</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">Tap "Install App"</div>
+          <div class="step-desc">A banner will appear at the bottom. Tap <strong>"Install"</strong> or look for the install icon in the address bar</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">Open from home screen</div>
+          <div class="step-desc">The <strong>BarMS Pro</strong> icon now appears on your home screen. Tap it to open!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="tip-box">
+      <p>⚠️ <strong>No internet?</strong> The app still works! You can view data and record sales. Everything syncs automatically when internet returns.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <p>Login with your username and password given by your manager<br><strong>Change your password after first login!</strong></p>
+  </div>
+</div>
+
+<!-- iOS CARD -->
+<div class="card">
+  <div class="card-header">
+    <div class="logo">🍺</div>
+    <div class="app-name">BarMS Pro</div>
+    <div class="app-sub">Bar Management System — Rwanda 🇷🇼</div>
+  </div>
+  <div class="card-body">
+    <div class="title">🍎 How to install on iPhone / iPad</div>
+
+    <div class="url-box">
+      <div class="url-label">Your bar's link</div>
+      <div class="url-text">chezpatrick.barms.rw</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">Open Safari browser</div>
+          <div class="step-desc">Must use <strong>Safari</strong> on iPhone/iPad — Chrome does not support install on iOS</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">Type your bar's link</div>
+          <div class="step-desc">Type <strong>chezpatrick.barms.rw</strong> in the address bar and press Go</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">Tap the Share button</div>
+          <div class="step-desc">Tap the <strong>Share icon ↑</strong> at the bottom of Safari (square with arrow pointing up)</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">Tap "Add to Home Screen"</div>
+          <div class="step-desc">Scroll down in the share menu and tap <strong>"Add to Home Screen"</strong> then tap <strong>"Add"</strong></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-title">Open from home screen</div>
+          <div class="step-desc">The <strong>BarMS Pro</strong> icon appears. Tap it — app opens fullscreen!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="tip-box">
+      <p>⚠️ <strong>No internet?</strong> The app still works! You can view data and record sales. Everything syncs automatically when internet returns.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <p>Login with your username and password given by your manager<br><strong>Change your password after first login!</strong></p>
+  </div>
+</div>
+
+</body>
+</html>

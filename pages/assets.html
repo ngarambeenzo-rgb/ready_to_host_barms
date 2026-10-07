@@ -1,0 +1,25 @@
+<div class="page" id="page-assets">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Assets &amp; Worth</div>
+      <div class="page-sub">Everything the business owns, everything it owes, and what it is worth today</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="arOpenWorth()">Worth over a period</button>
+      <button class="btn btn-primary btn-sm" onclick="showAssetAdd()">+ Add asset</button>
+    </div>
+  </div>
+
+  <div id="assetsWorth"></div>
+
+  <div class="ar-section">
+    <div class="ar-section-title"><span>Assets recorded<div class="ar-section-sub">Fridges, furniture, sound system, generator, TV, vehicle, renovation… Lower an item's worth as it ages.</div></span>
+      <button class="btn btn-primary btn-sm" onclick="showAssetAdd()">+ Add asset</button></div>
+    <div class="ar-table-wrap"><table class="ar-table">
+      <thead><tr><th>Item</th><th>Type</th><th class="num">Worth now</th><th>Since</th><th>Paid by</th><th>Note</th><th></th></tr></thead>
+      <tbody id="assetBody"></tbody>
+    </table></div>
+  </div>
+
+  <div class="ar-note">Money in each account comes from sales, expenses and the Cash Book. Record a starting balance once per account in Cash Book → Record money movement → Starting balance, so money that was there before BarMS is counted.</div>
+</div>

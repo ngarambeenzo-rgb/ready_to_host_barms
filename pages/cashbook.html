@@ -1,0 +1,22 @@
+<div class="page" id="page-cashbook">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Cash Book</div>
+      <div class="page-sub">Money that is not a sale or an expense, and what the business owns — it changes cash and worth, never profit</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="showPage('assets')">Assets &amp; Worth</button>
+      <button class="btn btn-primary btn-sm" onclick="showCashbookAdd()">+ Record money movement</button>
+    </div>
+  </div>
+  <div class="ar-kpis" id="cbKpis"></div>
+  <div class="ar-section">
+    <div class="ar-table-wrap"><table class="ar-table">
+      <thead><tr><th>Date</th><th>Type</th><th class="num">Amount</th><th>Account</th><th>Note</th><th>By</th><th></th></tr></thead>
+      <tbody id="cbBody"></tbody>
+    </table></div>
+    <div class="ar-note">Shows this month. New capital raises what the business is worth; owner withdrawals lower it. A loan brings money in but is also owed, so it does not change the worth. None of these are income or expenses.</div>
+  </div>
+
+  <div class="ar-note">Equipment and the business's total worth are on the <button class="ar-link" onclick="showPage('assets')">Assets &amp; Worth</button> page.</div>
+</div>

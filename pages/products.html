@@ -1,0 +1,65 @@
+        <div class="page" id="page-products">
+          <div class="form-panel">
+            <div class="form-panel-title" id="productFormTitle"><span data-i18n="addProductTitle">ADD PRODUCT — Click
+                any row in the table to edit</span></div>
+            <div class="form-row cols-3">
+              <div class="form-group"><label class="form-label" data-i18n="productName"><span
+                    data-i18n="productName">Product Name *</span></label><input class="form-input" id="pName"
+                  data-i18n-ph="productNamePh" placeholder="e.g. Primus Beer" data-i18n-ph="productNamePh" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="category">Category</label><input
+                  class="form-input" id="pCategory" value="Beer" data-i18n-ph="categoryPh"
+                  placeholder="Beer, Food, Spirits…" data-i18n-ph="categoryPh" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="unit">Unit</label><input class="form-input"
+                  id="pUnit" value="Bottle" data-i18n-ph="unitPh" placeholder="Bottle, Plate, Glass…"
+                  data-i18n-ph="unitPh" /></div>
+            </div>
+            <div class="form-row cols-4">
+              <div class="form-group"><label class="form-label" data-i18n="sellPrice"><span data-i18n="sellPrice">Sell
+                    Price (RWF) *</span></label><input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="pSellPrice" value="0"
+                  min="0" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="costPrice"><span data-i18n="costPrice">Cost
+                    Price (RWF)</span></label><input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="pCostPrice" value="0"
+                  min="0" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="initialStock"><span
+                    data-i18n="initialStock">Initial Stock</span></label><input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input"
+                  id="pStock" value="0" min="0" /></div>
+              <div class="form-group"><label class="form-label" data-i18n="lowStockAlert"><span
+                    data-i18n="lowStockAlert">Low Stock Alert</span></label><input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input"
+                  id="pAlert" value="5" min="0" /></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary" id="pSaveBtn" onclick="saveProduct()" data-i18n="saveProductBtn"><span
+                  data-i18n="saveProductBtn">SAVE PRODUCT</span></button>
+              <button class="btn btn-ghost" onclick="clearProductForm()" data-i18n="clearBtn"><span
+                  data-i18n="clearBtn">✕ Clear</span></button>
+            </div>
+            <div id="pStatus" style="margin-top:10px;font-size:12px"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span data-i18n="allProducts"><span data-i18n="allProducts">All
+                    Products</span></span></div>
+              <input class="form-input" style="width:200px;padding:7px 12px" data-i18n-ph="searchProductsPh"
+                placeholder="Search products…" data-i18n-ph="searchProductsPh" oninput="filterProducts(this.value)" />
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="name">Name</th>
+                    <th data-i18n="category">Category</th>
+                    <th data-i18n="unit">Unit</th>
+                    <th data-i18n="sellPrice">Sell Price</th>
+                    <th data-i18n="costPrice">Cost Price</th>
+                    <th data-i18n="stock">Stock</th>
+                    <th data-i18n="alert">Alert</th>
+                    <th data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="productsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPENSES -->

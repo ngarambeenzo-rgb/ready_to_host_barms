@@ -1,0 +1,39 @@
+<div class="page" id="page-bar-ingredients">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Ingredients</div>
+      <div class="page-sub">Physical bar stock — what you store</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button data-perm="canEditStock" class="btn btn-ghost btn-sm" onclick="showBarReceiveStockModal()">Receive Stock</button>
+      <button data-perm="canEditStock" class="btn btn-ghost btn-sm" onclick="showBarBreakageModal()">Record Breakage</button>
+      <button data-perm="canManageItems" class="btn btn-primary btn-sm" onclick="showAddBarIngredientModal()">+ Add Ingredient</button>
+    </div>
+  </div>
+
+  <!-- Total stock value -->
+  <div id="biIngValueBox" class="stock-value-box"></div>
+
+  <!-- Low stock summary -->
+  <div id="biLowStockAlert" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--red)"></div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:760px">
+      <thead>
+        <tr style="background:var(--bg);border-bottom:2px solid var(--border)">
+          <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Ingredient</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Quantity</th>
+          <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Unit</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Cost / Unit</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Stock Value</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Min Stock</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Status</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="biIngBody">
+        <tr><td colspan="8" style="padding:40px;text-align:center;color:var(--muted)"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading…</span></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

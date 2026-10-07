@@ -1,0 +1,14 @@
+DirectoryIndex index.php
+Options -Indexes
+
+# Force HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|192\.168\.|10\.) [NC]
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Correct MIME types for PWA
+AddType application/manifest+json .json
+AddType application/javascript .js
+AddType text/css .css
+AddType image/png .png

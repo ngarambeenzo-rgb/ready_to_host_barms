@@ -1,0 +1,166 @@
+<div class="page" id="page-tables">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Table Management</div>
+      <div class="page-sub">Open, manage and close table sessions</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="loadTables()">Refresh</button>
+      <button class="btn btn-primary btn-sm" onclick="showAddTableModal()">+ Add Table</button>
+    </div>
+  </div>
+
+  <!-- Tables Grid -->
+  <div id="tablesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:20px">
+    <div style="text-align:center;padding:40px;color:var(--muted);grid-column:1/-1">Gutegereza...</div>
+  </div>
+
+  <!-- Recent Sessions -->
+  <div class="card" style="padding:18px">
+    <div class="card-title" style="margin-bottom:14px"><span></span> Recent Sessions</div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Table</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Opened By</th>
+            <th>Closed By</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="sessionsTableBody">
+          <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">No sessions yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Active Session Modal -->
+  <div id="sessionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;align-items:center;justify-content:center;overflow-y:auto;padding:16px">
+    <div style="background:var(--card);border-radius:var(--r);width:100%;max-width:640px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.5)">
+
+      <!-- Session Header -->
+      <div style="background:linear-gradient(135deg,var(--blue-dark),var(--blue));padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#fff" id="sessionModalTitle">Table</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.7)" id="sessionModalMeta"></div>
+        </div>
+        <button onclick="closeSessionModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:12px">✕ Funga</button>
+      </div>
+
+      <div style="padding:20px">
+        <!-- Old-system bill: payment only (the old item list is retired) -->
+        <div class="ar-note" style="margin-bottom:16px">This bill was opened with the old table system. You can take payment to close it; new items are added through <strong>New order</strong>.</div>
+
+        <!-- Items List -->
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Order Items</div>
+          <div id="sessionItemsList">
+            <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No items on this table yet</div>
+          </div>
+        </div>
+
+        <!-- Total -->
+        <div style="background:var(--card2);border-radius:var(--r-sm);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <span style="font-size:14px;font-weight:600;color:var(--text)">Total</span>
+          <span style="font-size:20px;font-weight:800;color:var(--green)" id="sessionTotal">RWF 0</span>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="btn btn-ghost" onclick="closeSessionModal()" style="justify-content:center">
+            ← Back
+          </button>
+          <button class="btn btn-primary" onclick="showPaymentModal()" style="justify-content:center" id="payBtn">
+            Pay
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="paymentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9100;align-items:center;justify-content:center;padding:16px">
+    <div style="background:var(--card);border-radius:var(--r);width:100%;max-width:400px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#059669,#10b981);padding:16px 20px">
+        <div style="font-size:16px;font-weight:800;color:#fff">Pay</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.8)" id="payModalTableName"></div>
+      </div>
+      <div style="padding:20px">
+        <div style="font-size:24px;font-weight:800;color:var(--green);text-align:center;margin-bottom:20px" id="payModalTotal">RWF 0</div>
+
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <button class="pay-method-btn active" id="pm_Cash" onclick="selectPayMethod('Cash',this)">Cash</button>
+            <button class="pay-method-btn" id="pm_MoMo" onclick="selectPayMethod('MoMo',this)">MoMo</button>
+            <button class="pay-method-btn" id="pm_Card" onclick="selectPayMethod('Card',this)">Card</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone Number (optional)</label>
+          <input type="tel" class="form-input" id="payPhone" placeholder="e.g. 0788000000"/>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Gushyira inyemezabwishyu byoherezwa kuri SMS/WhatsApp</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+          <button class="btn btn-ghost" onclick="document.getElementById('paymentModal').style.display='none'" style="justify-content:center">← Back</button>
+          <button class="btn btn-green" onclick="processPayment()" style="justify-content:center" id="confirmPayBtn">✓ Confirm Payment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div id="receiptModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9200;align-items:center;justify-content:center;padding:16px;overflow-y:auto">
+    <div style="background:var(--card);border-radius:var(--r);width:100%;max-width:420px">
+      <div style="padding:20px">
+
+        <!-- Receipt -->
+        <div id="receiptContent" style="background:#fff;color:#111;border-radius:12px;padding:24px;font-family:'DM Mono',monospace;margin-bottom:16px"></div>
+
+        <!-- Delivery Options -->
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Send Receipt</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+          <button class="btn btn-ghost" onclick="printReceipt()" style="justify-content:center;flex-direction:column;gap:4px;padding:12px 8px">
+            <span style="font-size:20px"></span>
+            <span style="font-size:11px">Print</span>
+          </button>
+          <button class="btn btn-ghost" onclick="sendSmsReceipt()" style="justify-content:center;flex-direction:column;gap:4px;padding:12px 8px">
+            <span style="font-size:20px"></span>
+            <span style="font-size:11px">Send SMS</span>
+          </button>
+          <button class="btn btn-ghost" onclick="sendWhatsAppReceipt()" style="justify-content:center;flex-direction:column;gap:4px;padding:12px 8px">
+            <span style="font-size:20px"></span>
+            <span style="font-size:11px">Send WhatsApp</span>
+          </button>
+        </div>
+
+        <button class="btn btn-primary" onclick="closeReceiptModal()" style="width:100%;justify-content:center">
+          ✓ Done — Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .table-card { background:var(--card2); border:2px solid var(--border); border-radius:var(--r); padding:16px; cursor:pointer; transition:all .2s; position:relative; }
+    .table-card:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.15); }
+    .table-card.occupied { border-color:var(--green); background:rgba(0,208,132,0.05); }
+    .table-card.occupied:hover { border-color:var(--green); }
+    .table-status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .table-status-dot.free { background:var(--muted); }
+    .table-status-dot.occupied { background:var(--green); box-shadow:0 0 8px var(--green); animation:tablePulse 2s infinite; }
+    @keyframes tablePulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .pay-method-btn { background:var(--card2); border:2px solid var(--border); border-radius:8px; padding:10px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:var(--text); transition:all .15s; }
+    .pay-method-btn.active { border-color:var(--blue); background:var(--blue-lt); color:var(--blue); }
+    .pay-method-btn:hover { border-color:var(--blue); }
+  </style>
+</div>

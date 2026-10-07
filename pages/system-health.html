@@ -1,0 +1,22 @@
+<div class="page" id="page-system-health">
+  <div class="page-header">
+    <div>
+      <div class="page-title">System Health</div>
+      <div class="page-sub">BarMS checks itself: the database, every table, the records, this device. Problems become incidents with a reference.</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="loadSystemHealth(true)">Check now</button>
+  </div>
+
+  <div id="shBanner"></div>
+  <div id="shChecks"></div>
+
+  <div class="ar-section">
+    <div class="ar-section-title"><span>Incidents<div class="ar-section-sub">Each problem once, with how often it happened and on which devices. Click one for its history.</div></span>
+      <div class="ar-chips" id="shRange"></div></div>
+    <div class="ar-table-wrap"><table class="ar-table">
+      <thead><tr><th>Reference</th><th>Problem</th><th>Severity</th><th class="num">Times</th><th>Devices</th><th>Last seen</th><th>Status</th></tr></thead>
+      <tbody id="shIncidents"></tbody>
+    </table></div>
+    <div class="ar-note" id="shIncSummary"></div>
+  </div>
+</div>

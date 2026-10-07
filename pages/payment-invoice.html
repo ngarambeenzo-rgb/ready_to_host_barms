@@ -1,0 +1,116 @@
+<div class="page" id="page-payment-invoice">
+  <div class="om-head">
+    <button onclick="piBack()" class="btn btn-ghost btn-sm om-back"><i data-ic="arrowleft"></i><span>Back to order</span></button>
+    <div class="om-head-text">
+      <h1 class="page-title">Payment</h1>
+      <div class="page-sub" id="piPageSub">Collect payment and issue receipt</div>
+    </div>
+  </div>
+
+  <div class="pi-layout">
+
+    <!-- LEFT: Invoice -->
+    <section class="pi-invoice">
+      <div class="pi-inv-head">
+        <div>
+          <div class="pi-inv-label">Invoice</div>
+          <div class="pi-inv-num" id="piInvoiceNum">INV-00001</div>
+        </div>
+        <div class="pi-inv-meta" id="piInvoiceMeta"></div>
+      </div>
+      <table class="pi-items">
+        <thead>
+          <tr><th>Item</th><th class="c">Qty</th><th class="r">Unit</th><th class="r">Total</th></tr>
+        </thead>
+        <tbody id="piItemsTable"></tbody>
+      </table>
+      <div class="pi-inv-total"><span>Total</span><span id="piTotal">RWF 0</span></div>
+      <div id="piNoteBox" class="pi-note" style="display:none"><i data-ic="pencil"></i><span id="piNoteText"></span></div>
+    </section>
+
+    <!-- RIGHT: Payment -->
+    <section class="pi-pay">
+      <div class="pi-due">
+        <div class="pi-due-label">Amount to collect</div>
+        <div class="pi-due-amt" id="piDueAmt">RWF 0</div>
+        <div class="pi-due-info" id="piDiscountInfo"></div>
+      </div>
+
+      <div class="pi-block">
+        <div class="pi-block-h">Payment method <span class="pi-keys">keys 1–5</span></div>
+        <div class="pi-methods">
+          <button class="pi-pm-btn active" id="pipm_Cash" onclick="piSelectPM('Cash',this)"><i data-ic="cash"></i>Cash</button>
+          <button class="pi-pm-btn" id="pipm_MoMo" onclick="piSelectPM('MoMo',this)"><i data-ic="phone"></i>MoMo</button>
+          <button class="pi-pm-btn" id="pipm_Card" onclick="piSelectPM('Card',this)"><i data-ic="card"></i>Card</button>
+          <button class="pi-pm-btn" id="pipm_Bank" onclick="piSelectPM('Bank',this)"><i data-ic="bank"></i>Bank</button>
+          <button class="pi-pm-btn" id="pipm_Mixed" onclick="piSelectPM('Mixed',this)"><i data-ic="swap"></i>Mixed</button>
+        </div>
+        <div id="piShiftHint" class="pi-hint" style="display:none"><i data-ic="alert"></i>
+          <span>You have no open shift, so this payment will not be in a cash count. Open a shift from the top bar.</span>
+        </div>
+      </div>
+
+      <!-- Discount (only for users the Owner allowed) -->
+      <div id="piDiscountBox" class="pi-block" style="display:none">
+        <div class="pi-block-h">Discount <span class="pi-keys" id="piDiscHint">set by the Owner</span></div>
+        <div id="piDiscountRules" class="pi-drules"></div>
+        <div id="piDiscountFree" style="display:none">
+          <div class="form-label" style="margin-top:10px">Other discount <span class="form-hint" style="display:inline;margin:0">— Owner only</span></div>
+          <div class="pi-discount">
+            <input type="number" class="form-input" id="piDiscount" min="0" step="1" placeholder="0" oninput="piUpdateTotals()"/>
+            <input class="form-input" id="piDiscountReason" placeholder="Reason (required)"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="pi-block">
+        <div class="pi-block-h">Receipt</div>
+        <div class="pi-delivery">
+          <label class="pi-delivery-opt selected" onclick="piSelectDelivery('print',this)">
+            <input type="radio" name="piDelivery" value="print" checked/><i data-ic="printer"></i><span>Print</span>
+          </label>
+          <label class="pi-delivery-opt" onclick="piSelectDelivery('sms',this)">
+            <input type="radio" name="piDelivery" value="sms"/><i data-ic="phone"></i><span>SMS</span>
+          </label>
+          <label class="pi-delivery-opt" onclick="piSelectDelivery('both',this)">
+            <input type="radio" name="piDelivery" value="both"/><i data-ic="receipt"></i><span>Both</span>
+          </label>
+        </div>
+        <div class="form-group" style="margin:10px 0 0">
+          <label class="form-label">Customer phone (for SMS)</label>
+          <input type="tel" class="form-input" id="piPhone" placeholder="e.g. 0788000000"/>
+        </div>
+      </div>
+
+      <button onclick="piPayAndClose()" id="piPayBtn" class="btn btn-green btn-lg btn-block pi-paybtn">
+        <span>Take payment</span><span class="pi-pay-amt" id="piPayTotal">RWF 0</span>
+      </button>
+      <div class="pi-after">After payment the table becomes free and you return to the orders list.</div>
+    </section>
+  </div>
+
+  <style>
+    /* Only while a receipt is being printed (body.print-receipt), so other pages can print normally */
+    @media print{
+      body.print-receipt *{visibility:hidden!important}
+      body.print-receipt #piReceiptModal,body.print-receipt #piReceiptModal *{visibility:visible!important}
+      body.print-receipt #piReceiptModal{position:fixed!important;inset:0 0 auto!important;display:flex!important;align-items:flex-start!important;justify-content:center!important;width:100%!important;height:auto!important;min-height:0!important;background:#fff!important;padding:0!important;overflow:visible!important}
+      body.print-receipt #piReceiptModal>div{width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;background:#fff!important;border:0!important;border-radius:0!important;padding:0!important;margin:0 auto!important}
+      body.print-receipt #piReceiptTitle{display:none!important}
+      body.print-receipt #piReceiptPreview{width:100%!important;max-width:80mm!important;margin:0 auto!important;padding:0!important;box-shadow:none!important;overflow-wrap:anywhere!important}
+      body.print-receipt #piReceiptActions{display:none!important}
+    }
+  </style>
+</div>
+
+<div id="piReceiptModal" role="dialog" aria-modal="true" aria-labelledby="piReceiptTitle">
+  <div class="pi-receipt-box">
+    <h2 id="piReceiptTitle" class="pi-receipt-title">
+      <span class="pi-paid-ic"><i data-ic="check"></i></span>Paid — receipt</h2>
+    <div id="piReceiptPreview"></div>
+    <div id="piReceiptActions" class="pi-receipt-actions">
+      <button class="btn btn-ghost" onclick="piFinishReceipt()">Done</button>
+      <button class="btn btn-primary" onclick="piPrintReceiptNow()"><i data-ic="printer"></i>Print receipt</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,131 @@
+        <div class="page" id="page-kitchen">
+          <div class="kpi-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:20px" id="kitKpiRow">
+          </div>
+          <div class="tabs">
+            <div class="tab active" onclick="showKitTab('revenue',this)" data-i18n="kitRevenueTab">Daily Revenue
+            </div>
+            <div class="tab" onclick="showKitTab('expenses',this)" data-i18n="kitExpensesTab">Kitchen Expenses</div>
+            <div class="tab" onclick="showKitTab('profit',this)" data-i18n="kitPLTab">P&amp;L Report</div>
+          </div>
+          <div id="kitTab-revenue">
+            <div class="form-panel">
+              <div class="form-panel-title" data-i18n="kitRevenueFormTitle"><span data-i18n="kitRevenueFormTitle">
+                  Record Daily Kitchen Revenue</span></div>
+              <p style="font-size:12px;color:var(--muted);margin-bottom:14px" data-i18n="kitRevenueNote">Enter the total
+                revenue collected by the kitchen for the day — no need to break down by item.</p>
+              <div class="form-row cols-3">
+                <div class="form-group"><label class="form-label" data-i18n="kitTotalRevenue">Total Daily Revenue (RWF)
+                    *</label><input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="kitRevAmount" value="0" min="0"
+                    style="font-size:18px;font-weight:700" /></div>
+                <div class="form-group"><label class="form-label" data-i18n="date">Date</label><input type="date"
+                    class="form-input" id="kitRevDate" /></div>
+                <div class="form-group"><label class="form-label" data-i18n="noteOptional">Note (optional)</label><input
+                    class="form-input" id="kitRevNote" data-i18n-ph="kitRevNotePh"
+                    placeholder="e.g. Busy lunch service…" data-i18n-ph="kitRevNotePh" /></div>
+              </div>
+              <button class="btn btn-cyan" style="background:var(--cyan);color:#fff" onclick="saveKitRevenue()"
+                data-i18n="kitRecordRevenueBtn"><span data-i18n="kitRecordRevenueBtn">RECORD REVENUE</span></button>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span data-i18n="kitRevenueHistory"><span
+                      data-i18n="kitRevenueHistory">Kitchen Revenue History</span></span></div>
+                <div style="font-size:13px;font-weight:700;color:var(--cyan)"><span data-i18n="thisMonth">This
+                    month:</span> <span id="kitRevMonthTotal" class="mono">RWF 0</span></div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="date">Date</th>
+                      <th data-i18n="totalRevenue">Total Revenue</th>
+                      <th data-i18n="note">Note</th>
+                      <th data-i18n="recordedBy">Recorded By</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="kitRevenueBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div id="kitTab-expenses" style="display:none">
+            <div class="form-panel">
+              <div class="form-panel-title" data-i18n="kitExpenseFormTitle"><span data-i18n="kitExpenseFormTitle">
+                  Record Kitchen Expense</span></div>
+              <p style="font-size:12px;color:var(--muted);margin-bottom:14px" data-i18n="kitExpenseNote">
+                Kitchen-specific costs only — cooking gas, ingredients, kitchen supplies, etc.</p>
+              <div class="form-row cols-3">
+                <div class="form-group" style="grid-column:1/3"><label class="form-label"
+                    data-i18n="description">Description *</label><input class="form-input" id="kitExpDesc"
+                    data-i18n-ph="kitExpDescPh" placeholder="e.g. Cooking gas refill…" /></div>
+                <div class="form-group"><label class="form-label" data-i18n="category">Category</label>
+                  <select class="form-input" id="kitExpCategory">
+                    <option data-i18n="catIngredients">Ingredients</option>
+                    <option data-i18n="catCookingGas">Cooking Gas</option>
+                    <option data-i18n="catKitchenSupplies">Kitchen Supplies</option>
+                    <option data-i18n="catEquipment">Equipment</option>
+                    <option data-i18n="catCleaning">Cleaning</option>
+                    <option data-i18n="catOther">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row cols-3">
+                <div class="form-group"><label class="form-label" data-i18n="amountRWF">Amount (RWF) *</label><input
+                    type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="kitExpAmount" value="0" min="0" /></div>
+                <div class="form-group"><label class="form-label" data-i18n="date">Date</label><input type="date"
+                    class="form-input" id="kitExpDate" /></div>
+                <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn"
+                    style="background:var(--orange);color:#fff;width:100%;justify-content:center;padding:11px"
+                    onclick="saveKitExpense()" data-i18n="kitRecordExpenseBtn">RECORD EXPENSE</button></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span data-i18n="kitExpenseHistory"><span
+                      data-i18n="kitExpenseHistory">Kitchen Expense History</span></span></div>
+                <div style="font-size:13px;font-weight:700;color:var(--red)"><span data-i18n="thisMonth">This
+                    month:</span> <span id="kitExpMonthTotal" class="mono">RWF 0</span></div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="date">Date</th>
+                      <th data-i18n="description">Description</th>
+                      <th data-i18n="category">Category</th>
+                      <th data-i18n="amount">Amount</th>
+                      <th data-i18n="recordedBy">Recorded By</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="kitExpensesBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div id="kitTab-profit" style="display:none">
+            <div class="form-panel" style="padding:16px 20px">
+              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                <div class="form-group" style="margin-bottom:0">
+                  <label class="form-label" data-i18n="period"><span data-i18n="period">Period</span></label>
+                  <select class="form-input" id="kitPnlPeriod" onchange="loadKitPnl()" style="width:160px">
+                    <option value="today" data-i18n="today">Today</option>
+                    <option value="week" data-i18n="thisWeek">This Week</option>
+                    <option value="month" data-i18n="thisMonth">This Month</option>
+                    <option value="custom" data-i18n="customDate">Custom Date</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;display:none" id="kitPnlDateWrap">
+                  <label class="form-label" data-i18n="pickDate"><span data-i18n="pickDate">Pick Date</span></label>
+                  <input type="date" class="form-input" id="kitPnlDate" onchange="loadKitPnl()" style="width:180px" />
+                </div>
+                <button class="btn btn-primary" style="margin-top:18px" onclick="exportKitchenPDF()"
+                  data-i18n="exportPDFBtn"><span data-i18n="exportPDFBtn">Export PDF</span></button>
+              </div>
+            </div>
+            <div id="kitPnlContent"></div>
+          </div>
+        </div>
+
+        <!-- REPORTS -->

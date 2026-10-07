@@ -1,0 +1,54 @@
+        <div class="page" id="page-audit">
+          <div class="form-panel" style="padding:14px 20px">
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label" data-i18n="filterByAction"><span data-i18n="filterByAction">Filter by
+                    Action</span></label>
+                <select class="form-input" id="auditFilter" onchange="loadAuditLog()" style="width:180px;max-width:100%">
+                  <option value="" data-i18n="allActions">All Actions</option>
+                  <option value="SALE" data-i18n="sales">Sales</option>
+                  <option value="VOID" data-i18n="voids">Voids</option>
+                  <option value="STOCK" data-i18n="stock">Stock</option>
+                  <option value="PRICE" data-i18n="priceChanges">Price Changes</option>
+                  <option value="LOGIN" data-i18n="logins">Logins</option>
+                  <option value="EXPENSE" data-i18n="expenses">Expenses</option>
+                  <option value="PRODUCT" data-i18n="products">Products</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label" data-i18n="filterByUser"><span data-i18n="filterByUser">Filter by
+                    User</span></label>
+                <select class="form-input" id="auditUserFilter" onchange="loadAuditLog()" style="width:180px;max-width:100%">
+                  <option value="" data-i18n="allUsers">All Users</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label" data-i18n="date">Date</label>
+                <input type="date" class="form-input" id="auditDate" onchange="loadAuditLog()" style="width:160px;max-width:100%" />
+              </div>
+              <button class="btn btn-ghost btn-sm" style="margin-top:18px" onclick="clearAuditFilter()"
+                data-i18n="clearFilters"><span data-i18n="clearFilters">Clear Filters</span></button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span data-i18n="auditLogTitle">Audit Log — Every Action Tracked</span></div>
+              <span class="badge badge-purple" id="auditCount">0</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="time">Time</th>
+                    <th data-i18n="user">User</th>
+                    <th data-i18n="role">Role</th>
+                    <th data-i18n="action">Action</th>
+                    <th data-i18n="details">Details</th>
+                    <th data-i18n="type">Type</th>
+                  </tr>
+                </thead>
+                <tbody id="auditBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
