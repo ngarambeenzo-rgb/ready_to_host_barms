@@ -1,0 +1,93 @@
+        <div class="page active" id="page-dashboard">
+
+          <!-- ── GREETING ── -->
+          <div class="db-head">
+            <div>
+              <h1 class="db-greet" id="dbGreeting">Welcome back</h1>
+              <div class="page-sub" id="dbGreetSub">Here is how today is going.</div>
+            </div>
+            <div class="db-head-actions">
+              <span class="db-updated" id="dbUpdated"></span>
+              <button class="btn btn-ghost btn-sm" onclick="loadDashboard(true)" title="Refresh"><i data-ic="refresh"></i><span>Refresh</span></button>
+            </div>
+          </div>
+
+          <!-- ── TODAY: one strip, four figures ── -->
+          <section class="db-strip" id="kpiRow1" aria-label="Today"></section>
+
+          <!-- ── LIVE: kitchen + attention ── -->
+          <div class="db-grid db-grid-live">
+            <section class="db-panel" id="dbKitchenPanel">
+              <div class="db-panel-head">
+                <div><div class="db-panel-title">Kitchen</div><div class="db-panel-sub">Orders being prepared and ready to serve</div></div>
+                <button class="btn btn-quiet btn-sm" onclick="showPage('kitchen-queue')">Open queue<i data-ic="chevright"></i></button>
+              </div>
+              <div id="dbKitchenOverview"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading kitchen</span></div></div>
+            </section>
+            <section class="db-panel" id="kpiRow2Panel">
+              <div class="db-panel-head"><div><div class="db-panel-title">Needs attention</div><div class="db-panel-sub">Things to act on today</div></div></div>
+              <div class="db-attn" id="kpiRow2"></div>
+            </section>
+          </div>
+
+          <!-- ── MONEY + TREND ── -->
+          <div class="db-grid db-row-2col">
+            <section class="db-panel">
+              <div class="db-panel-head">
+                <div><div class="db-panel-title" data-i18n="cashFlowTitle">Today's Cash Flow</div><div class="db-panel-sub" data-i18n="cashFlowSub">Money In vs Money Out — real-time snapshot</div></div>
+                <span class="status" id="cashFlowStatus"></span>
+              </div>
+              <div class="db-cash" id="cashFlowGrid"></div>
+            </section>
+            <section class="db-panel">
+              <div class="db-panel-head">
+                <div><div class="db-panel-title" data-i18n="monthlySalesTitle">Monthly Sales — Last 6 Months</div><div class="db-panel-sub" id="dbMonthSub"></div></div>
+              </div>
+              <div class="db-chart-wrap" id="monthlyChart"></div>
+            </section>
+          </div>
+
+          <!-- ── TODAY'S SALES + LOW STOCK ── -->
+          <div class="db-grid db-row-2col">
+            <section class="db-panel db-panel-flush">
+              <div class="db-panel-head">
+                <div><div class="db-panel-title" data-i18n="todaySalesActivity">Today's Sales Activity</div><div class="db-panel-sub" id="todayTxCount"></div></div>
+                <button class="btn btn-quiet btn-sm" onclick="showPage('bar-sales')">All sales<i data-ic="chevright"></i></button>
+              </div>
+              <div class="db-table-wrap">
+                <table class="db-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="time">Time</th>
+                      <th data-i18n="product">Product</th>
+                      <th class="r" data-i18n="qty">Qty</th>
+                      <th class="r" data-i18n="total">Total</th>
+                      <th data-i18n="soldBy">Sold By</th>
+                    </tr>
+                  </thead>
+                  <tbody id="todaySalesBody"></tbody>
+                </table>
+              </div>
+            </section>
+            <section class="db-panel db-panel-flush">
+              <div class="db-panel-head">
+                <div><div class="db-panel-title" data-i18n="lowStockAlerts">Low Stock Alerts</div><div class="db-panel-sub"><span id="lowStockCount">0</span> items at or below their alert level</div></div>
+                <button class="btn btn-quiet btn-sm" onclick="showPage('bar-items')">Items<i data-ic="chevright"></i></button>
+              </div>
+              <div class="db-table-wrap">
+                <table class="db-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="product">Product</th>
+                      <th class="r" data-i18n="stock">Stock</th>
+                      <th class="r" data-i18n="alert">Alert</th>
+                      <th data-i18n="status">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lowStockBody"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+        </div>

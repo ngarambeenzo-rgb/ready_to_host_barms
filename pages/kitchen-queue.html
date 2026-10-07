@@ -1,0 +1,39 @@
+        <div class="page" id="page-kitchen-queue">
+          <div class="kq-header">
+            <div class="kq-header-left">
+              <div class="kq-title">Kitchen queue</div>
+              <div class="kq-subtitle" id="kqSubtitle">Food orders from the floor, oldest first</div>
+            </div>
+            <div class="kq-stats" id="kqStats"></div>
+          </div>
+
+          <div class="kq-columns">
+            <!-- PENDING -->
+            <div class="kq-col">
+              <div class="kq-col-header kq-col-pending">
+                <span>New</span>
+                <span class="kq-col-count" id="kqCountPending">0</span>
+              </div>
+              <div class="kq-col-body" id="kqColPending"></div>
+            </div>
+
+            <!-- ACCEPTED / PREPARING -->
+            <div class="kq-col">
+              <div class="kq-col-header kq-col-preparing">
+                <span>Preparing</span>
+                <span class="kq-col-count" id="kqCountPreparing">0</span>
+              </div>
+              <div class="kq-col-body" id="kqColPreparing"></div>
+            </div>
+
+            <!-- READY -->
+            <div class="kq-col">
+              <div class="kq-col-header kq-col-ready">
+                <span>Ready to serve</span>
+                <span class="kq-col-count" id="kqCountReady">0</span>
+              </div>
+              <div class="kq-col-body" id="kqColReady"></div>
+            </div>
+          </div>
+
+        </div>

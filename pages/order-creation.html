@@ -1,0 +1,66 @@
+<div class="page" id="page-order-creation">
+  <div class="page-header">
+    <div>
+      <div class="page-title">New order</div>
+      <div class="page-sub">Choose how the customer is ordering</div>
+    </div>
+    <ol class="oc-steps" id="ocSteps" aria-label="Steps">
+      <li data-step="1" class="on">Type</li>
+      <li data-step="2">Table</li>
+      <li data-step="3">Confirm</li>
+    </ol>
+  </div>
+
+  <!-- Step 1: Order Type -->
+  <div id="ocStep1" class="oc-step">
+    <div class="oc-types">
+      <button onclick="ocSelectType('dinein')" id="ocBtn-dinein" class="oc-type">
+        <span class="oc-type-ic"><i data-ic="armchair"></i></span>
+        <span class="oc-type-name">Dine-in</span>
+        <span class="oc-type-sub">Customer sits at a table</span>
+        <kbd>1</kbd>
+      </button>
+      <button onclick="ocSelectType('takeaway')" id="ocBtn-takeaway" class="oc-type">
+        <span class="oc-type-ic"><i data-ic="bag"></i></span>
+        <span class="oc-type-name">Takeaway</span>
+        <span class="oc-type-sub">Customer takes the order to go</span>
+        <kbd>2</kbd>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Select Table (Dine-In only) -->
+  <div id="ocStep2" class="oc-step" style="display:none">
+    <div class="oc-bar">
+      <button onclick="ocBack()" class="btn btn-ghost btn-sm"><i data-ic="arrowleft"></i>Back</button>
+      <div class="oc-legend">
+        <span class="status ok">Free</span><span class="status bad">Occupied</span><span class="status warn">Cleaning</span>
+      </div>
+    </div>
+    <div id="ocTableGrid" class="oc-floor"></div>
+    <button onclick="showOCAddTableModal()" class="oc-add-table"><i data-ic="plus"></i>Add a table</button>
+  </div>
+
+  <!-- Step 3: Confirm & Create -->
+  <div id="ocStep3" class="oc-step" style="display:none">
+    <div class="oc-confirm">
+      <div class="oc-confirm-head">
+        <span class="oc-type-ic" id="ocConfirmIcon"><i data-ic="armchair"></i></span>
+        <div>
+          <div class="oc-confirm-title" id="ocConfirmTitle">New Dine-In Order</div>
+          <div class="oc-confirm-sub" id="ocConfirmSub">Table: T01</div>
+        </div>
+      </div>
+      <dl class="oc-summary">
+        <div><dt>Order type</dt><dd id="ocSummaryType">Dine-In</dd></div>
+        <div id="ocSummaryTableRow"><dt>Table</dt><dd id="ocSummaryTable">T01</dd></div>
+        <div><dt>Status</dt><dd><span class="status info">Draft</span></dd></div>
+      </dl>
+      <div class="oc-confirm-actions">
+        <button onclick="ocBackToStep(2)" id="ocStep3Back" class="btn btn-ghost"><i data-ic="arrowleft"></i>Back</button>
+        <button onclick="ocCreateOrder()" id="ocCreateBtn" class="btn btn-primary btn-lg" style="flex:1">Create order</button>
+      </div>
+      <div class="oc-hint">Press <kbd>Enter</kbd> to create</div>
+    </div>
+  </div>
+</div>

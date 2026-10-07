@@ -1,0 +1,65 @@
+        <div class="page" id="page-voidreqs">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Requests</div>
+              <div class="page-sub">Refunds and voids sent by staff, waiting for someone allowed to approve them</div>
+            </div>
+          </div>
+          <div class="tabs" id="reqTabs">
+            <div class="tab active" data-reqtab="refunds" data-perm="canGiveRefunds" onclick="showVoidTab('refunds',this)">Refunds <span class="req-count" id="reqCountRefunds"></span></div>
+            <div class="tab" data-reqtab="sales" data-perm="canApproveVoids" onclick="showVoidTab('sales',this)">Voids <span class="req-count" id="reqCountSales"></span></div>
+            <div class="tab" data-reqtab="expenses" data-perm="canApproveVoids" onclick="showVoidTab('expenses',this)">Expenses <span class="req-count" id="reqCountExp"></span></div>
+          </div>
+
+          <div id="voidTab-refunds">
+            <div class="card">
+              <div class="card-header">
+                <div><div class="card-title">Refund requests</div>
+                <div class="card-sub">A customer paid and is getting money back. Approving pays the refund and puts sealed drinks back in stock.</div></div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Order and items</th><th>Amount</th><th>Paid back by</th><th>Requested By</th><th>Reason</th><th>Date</th><th>Status</th><th>Action</th></tr>
+                  </thead>
+                  <tbody id="voidRefundBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="voidTab-sales" style="display:none">
+            <div class="card" id="voidSalesPanel">
+              <div class="card-header">
+                <div><div class="card-title">Void requests</div>
+                <div class="card-sub">A sale entered by mistake. Approving cancels it and reverses stock.</div></div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Type</th><th>Product</th><th>Amount</th><th>Requested By</th><th>Reason</th><th>Date</th><th>Status</th><th>Action</th></tr>
+                  </thead>
+                  <tbody id="voidSalesBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="voidTab-expenses" style="display:none">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Expense void requests</div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Expense</th><th>Amount</th><th>Requested By</th><th>Reason</th><th>Date</th><th>Status</th><th>Action</th></tr>
+                  </thead>
+                  <tbody id="voidExpBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AUDIT LOG -->

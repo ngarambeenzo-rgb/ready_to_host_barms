@@ -1,0 +1,27 @@
+# Secrets — the live server's database password (template: config/db.hosting.example.php)
+config/db.hosting.php
+
+# Business data: database backups and uploaded product photos (customers' records)
+backups/db/*
+!backups/db/index.html
+uploads/products/*
+!uploads/products/.gitkeep
+
+# Test and debug output
+_qa_resp.json
+_qa_*.js
+*.dmp
+*.log
+sess_*
+
+# Stray copies, editor and OS files
+manifest (1).json
+*.bak
+*.tmp
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+index.php back
+sw (1).js

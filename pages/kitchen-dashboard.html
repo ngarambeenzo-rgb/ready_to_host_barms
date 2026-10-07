@@ -1,0 +1,84 @@
+<div class="page" id="page-kitchen-dashboard">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Kitchen Dashboard</div>
+      <div class="page-sub">Kitchen operations overview</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="loadKitchenDashboard()">Refresh</button>
+    </div>
+  </div>
+
+  <!-- Sales Stats -->
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Food Sales</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Today's Sales</div>
+        <div style="font-size:22px;font-weight:900;color:var(--blue)" id="kdTodaySales">RWF 0</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">This Week</div>
+        <div style="font-size:22px;font-weight:900;color:var(--blue)" id="kdWeekSales">RWF 0</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">This Month</div>
+        <div style="font-size:22px;font-weight:900;color:var(--blue)" id="kdMonthSales">RWF 0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profit -->
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Today's Profit</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Revenue</div>
+        <div style="font-size:18px;font-weight:900;color:var(--green)" id="kdRevenue">RWF 0</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Food Cost</div>
+        <div style="font-size:18px;font-weight:900;color:var(--red)" id="kdFoodCost">RWF 0</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Profit</div>
+        <div style="font-size:18px;font-weight:900;color:var(--green)" id="kdProfit">RWF 0</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Margin</div>
+        <div style="font-size:18px;font-weight:900;color:var(--text)" id="kdMargin">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+    <!-- Kitchen Expenses -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:12px">Kitchen Expenses (Today)</div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--muted)">Purchases</span>
+        <span style="font-weight:700" id="kdPurchases">RWF 0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--muted)">Waste</span>
+        <span style="font-weight:700;color:var(--red)" id="kdWaste">RWF 0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px">
+        <span style="color:var(--muted)">Adjustments</span>
+        <span style="font-weight:700" id="kdAdjustments">RWF 0</span>
+      </div>
+    </div>
+
+    <!-- Top Selling Foods -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:12px">Top Selling Foods</div>
+      <div id="kdTopFoods" style="font-size:13px;color:var(--muted)"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading…</span></div></div>
+    </div>
+
+    <!-- Low Stock Alerts -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:12px">Low Stock Alerts</div>
+      <div id="kdLowStock" style="font-size:13px;color:var(--muted)"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading…</span></div></div>
+    </div>
+  </div>
+</div>

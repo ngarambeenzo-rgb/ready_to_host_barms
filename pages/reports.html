@@ -1,0 +1,26 @@
+        <div class="page" id="page-reports">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px">
+            <div class="tabs" style="margin-bottom:0">
+              <div class="tab active" id="rtab-daily" onclick="switchReportTab('daily',this)" data-i18n="daily">Daily
+              </div>
+              <div class="tab" id="rtab-weekly" onclick="switchReportTab('weekly',this)" data-i18n="weekly">Weekly</div>
+              <div class="tab" id="rtab-monthly" onclick="switchReportTab('monthly',this)" data-i18n="monthly">Monthly
+              </div>
+            </div>
+            <div id="reportDateWrap" style="display:flex;align-items:center;gap:8px">
+              <label class="form-label" style="margin-bottom:0;white-space:nowrap" id="reportDateLabel"
+                data-i18n="pickDay"><span data-i18n="pickDay">Pick a day:</span></label>
+              <input type="date" class="form-input" id="reportDatePick" style="width:180px;max-width:100%"
+                onchange="resetReportValidation();loadReport()" />
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+              <div id="reportValidationBadge" style="display:none"></div>
+              <button id="validateReportBtn" class="btn btn-green" onclick="validateReport()" style="display:none">
+                Validate Report</button>
+              <button class="btn btn-primary" onclick="exportReportPDF()">Export PDF</button>
+            </div>
+          </div>
+          <div id="reportContent" style="padding-bottom:40px"></div>
+        </div>
+
+        <!-- CHARTS -->

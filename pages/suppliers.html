@@ -1,0 +1,24 @@
+<div class="page" id="page-suppliers">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Suppliers</div>
+      <div class="page-sub">What each supplier delivered, what was paid, and what is still owed</div>
+    </div>
+  </div>
+  <div class="ar-kpis">
+    <div class="ar-kpi static"><div class="ar-kpi-label">Total owed to suppliers</div><div class="ar-kpi-value ar-bad" id="supTotalOwed">RWF 0</div></div>
+    <div class="ar-kpi static"><div class="ar-kpi-label">Suppliers with a balance</div><div class="ar-kpi-value" id="supCount">0</div></div>
+  </div>
+  <div class="ar-section">
+    <div class="ar-table-wrap">
+      <table class="ar-table">
+        <thead><tr>
+          <th>Supplier</th><th class="num">Deliveries</th><th class="num">Bought</th><th class="num">Paid on delivery</th>
+          <th class="num">Paid later</th><th class="num">Still owed</th><th>Last delivery</th><th></th>
+        </tr></thead>
+        <tbody id="supBody"></tbody>
+      </table>
+    </div>
+    <div class="ar-note">Suppliers come from the name typed when receiving stock. To record a debt, receive the stock and enter less than the full amount in "Amount paid now".</div>
+  </div>
+</div>

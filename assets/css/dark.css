@@ -1,0 +1,222 @@
+/* ═══════════════════════════════════════════════════
+   BARMS PRO — dark.css
+   Dark theme: html[data-theme="dark"] (toggle in the top bar,
+   stored per device as barms_theme). Surfaces are deep tones of
+   the BarMS navy/indigo; brand and status colours are unchanged,
+   only lifted a step where text needs contrast.
+   Screen only — printouts and receipts always stay light.
+═══════════════════════════════════════════════════ */
+@media screen {
+
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D0F24; --surface:#151833; --surface-2:#1B1F3F; --card:#151833;
+  --text:#E7E8FF; --muted:#A4A6CC; --faint:#5E6290;
+  --border:rgba(165,170,255,.13); --border-dk:rgba(165,170,255,.24);
+  --brand:#5B7CFA; --blue:#7C93FB;
+  --blue-lt:rgba(91,124,250,.16); --primary-lt:rgba(139,92,246,.18); --purple-lt:rgba(139,92,246,.18);
+  --green-lt:rgba(14,168,117,.16); --red-lt:rgba(240,92,122,.16); --orange-lt:rgba(255,140,66,.16); --gold-lt:rgba(200,147,26,.18);
+  --cyan-lt:rgba(11,188,212,.16); --pink-lt:rgba(236,72,153,.16); --gold-mid:rgba(200,147,26,.35);
+  --ink-green:#34D399; --ink-red:#FB7185; --ink-orange:#FDBA74; --ink-gold:#E8B54A;
+  --sh-1:0 1px 2px rgba(0,0,0,.35);
+  --sh-2:0 1px 2px rgba(0,0,0,.4),0 6px 16px rgba(0,0,0,.3);
+  --sh-pop:0 4px 10px rgba(0,0,0,.45),0 18px 40px rgba(0,0,0,.45);
+  --ring:0 0 0 3px rgba(139,92,246,.35);
+}
+html[data-theme="dark"] body{background:var(--bg);color:var(--text)}
+
+/* ── surfaces that older CSS painted white ── */
+html[data-theme="dark"] :is(.card,.form-panel,.kpi,.modal,.notif-panel,.popup-notif,.table-card,.pay-method-btn,.login-card,.topbar,
+  .db-panel,.db-strip,.db-kpi-card,.om-tile,.om-cart,.om-order-card,.oc-table,.oc-type,.oc-confirm,.pi-invoice,.pi-due,.pi-block,
+  .pi-pm-btn,.kq-ticket,.rpt-card,.rpt-kpi,.rpt-kpi-row,.bx-stat:not(.hero),.svb-card,.stock-value-box .svb-card,.ar-section,.ar-kpi,.ar-issue,
+  .tp-opt,.qs-item,.btn-ghost,.btn-icon,.om-qty-btn,.kq-btn:not(.primary),.kq-reject-reason-btn,.pi-delivery-opt){background-color:var(--surface)}
+html[data-theme="dark"] .modal{border-color:var(--border-dk)}
+html[data-theme="dark"] .overlay{background:rgba(3,4,14,.62)}
+html[data-theme="dark"] .tabs{background:rgba(165,170,255,.08)}
+html[data-theme="dark"] .tab.active{background:var(--surface-2);box-shadow:0 0 0 1px var(--border-dk)}
+html[data-theme="dark"] .db-table thead th,html[data-theme="dark"] .om-cart-foot,html[data-theme="dark"] .pi-items th{background:var(--surface-2)}
+html[data-theme="dark"] .db-table thead th{background:var(--surface)}
+html[data-theme="dark"] .kq-col{background:rgba(165,170,255,.05);border-color:var(--border)}
+html[data-theme="dark"] :is(.oc-table.occupied,.kq-ticket.delayed){background:rgba(240,92,122,.08)}
+html[data-theme="dark"] .om-note .form-input{background:var(--surface-2)}
+html[data-theme="dark"] .tb-search,html[data-theme="dark"] .tb-search kbd,html[data-theme="dark"] .oc-hint kbd{background:var(--surface-2)}
+html[data-theme="dark"] .notif-dot{box-shadow:0 0 0 2px var(--surface)}
+html[data-theme="dark"] .om-tile-qty{box-shadow:0 0 0 2px var(--surface)}
+html[data-theme="dark"] .tst{background:#232750;border:1px solid var(--border-dk)}
+html[data-theme="dark"] #paySuccess{background:rgba(13,15,36,.82)}
+html[data-theme="dark"] .skel{background:linear-gradient(90deg,rgba(165,170,255,.06) 25%,rgba(165,170,255,.12) 37%,rgba(165,170,255,.06) 63%);background-size:400% 100%}
+html[data-theme="dark"] tbody tr:hover,html[data-theme="dark"] .db-table tbody tr:hover{background:rgba(165,170,255,.05)}
+html[data-theme="dark"] select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A4A6CC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+html[data-theme="dark"] .form-input::placeholder{color:var(--faint)}
+html[data-theme="dark"] .modal::before{background:var(--faint)}
+
+/* product art tiles: soft tint instead of bright pastel */
+html[data-theme="dark"] :is(.pthumb.noimg,.tp-art){background:rgba(165,170,255,.07)!important}
+html[data-theme="dark"] .pthumb{border-color:var(--border)}
+html[data-theme="dark"] .om-tile-img{background:var(--surface-2)}
+
+/* IMS logo on dark surfaces */
+html[data-theme="dark"] .ims-logo{--glass-edge:rgba(255,255,255,.36);--glass-body:rgba(199,210,254,.17);--glass-light:rgba(255,255,255,.9);filter:none;mix-blend-mode:normal}
+
+/* ── charts (bx-charts) ── */
+html[data-theme="dark"] .bx{color:var(--text)}
+html[data-theme="dark"] :is(.bx-empty,.bx-legend,.bx-col-x,.bx-ring-cl,.bx-stat-sub,.bx-hrow-sub,.bx-grid span){color:var(--muted)}
+html[data-theme="dark"] .bx-grid{border-top-color:rgba(165,170,255,.1)}
+html[data-theme="dark"] :is(.bx-ring-cv,.bx-ring-val,.bx-hrow-val,.bx-ring-label,.bx-hrow-label,.bx-stat){color:var(--text)}
+html[data-theme="dark"] .bx-stat-label{color:var(--muted)}
+html[data-theme="dark"] .bx-stat:not(.hero){border-color:var(--border)}
+html[data-theme="dark"] .bx-hrow-track{background:rgba(165,170,255,.1)}
+html[data-theme="dark"] :is(.bx-ring-row,.bx-hrow):is(:hover,:focus-visible){background:rgba(165,170,255,.06)}
+html[data-theme="dark"] :is(.bx-pill,.bx-hrow-rank){background:rgba(91,124,250,.18);color:#C7D2FE}
+html[data-theme="dark"] .bx-stat-icon{background:var(--surface-2)}
+html[data-theme="dark"] .bx-ring-chart circle[stroke="#EEF0F6"],html[data-theme="dark"] .bx-ring-chart circle[stroke="#eef0f6"]{stroke:rgba(165,170,255,.1)}
+
+/* ── classic reports page ── */
+html[data-theme="dark"] :is(.rpt-card,.rpt-kpi){border-color:var(--border)}
+html[data-theme="dark"] :is(.rpt-product-name,.rpt-table td,.rpt-sum-total,.rpt-card-title){color:var(--text)}
+html[data-theme="dark"] :is(.rpt-margin-label,.rpt-muted,.rpt-empty,.rpt-empty-cell,.rpt-product-qty,.rpt-table th){color:var(--muted)!important}
+html[data-theme="dark"] :is(.rpt-table th,.rpt-total-row td){background:var(--surface-2)}
+html[data-theme="dark"] :is(.rpt-table tbody tr,.rpt-sum-row){border-color:var(--border)}
+html[data-theme="dark"] .rpt-product-bar-wrap,html[data-theme="dark"] .rpt-bar-track{background:rgba(165,170,255,.1)}
+html[data-theme="dark"] .rpt-sum-label{color:var(--muted)}
+html[data-theme="dark"] .rpt-margin-label strong{color:var(--text)}
+
+/* ── inline styles written into pages by older scripts ── */
+html[data-theme="dark"] :is([style*="background:#fff"],[style*="background: #fff"],[style*="background:#FFF"],[style*="background:#ffffff"],[style*="background:white"],[style*="background:#F8FAFC"],[style*="background:#F1F5F9"]):not(#piReceiptPreview):not(#receiptContent):not(#pwaInstallBanner *){background:var(--surface)!important}
+html[data-theme="dark"] :is([style*="color:#0F172A"],[style*="color:#334155"],[style*="color:#1E293B"],[style*="color:#111827"],[style*="color:var(--text)"]):not(#piReceiptPreview *):not(#receiptContent *){color:var(--text)!important}
+html[data-theme="dark"] :is([style*="color:#64748B"],[style*="color:#475569"],[style*="color:#4A5568"],[style*="color:#94A3B8"],[style*="color:#7B8CAA"]):not(#piReceiptPreview *):not(#receiptContent *){color:var(--muted)!important}
+html[data-theme="dark"] :is([style*="border:1px solid #E2E8F0"],[style*="border-bottom:1px solid #E2E8F0"],[style*="border:1px solid #F1F5F9"]){border-color:var(--border)!important}
+html[data-theme="dark"] [style*="background:#E2E8F0"]{background:rgba(165,170,255,.12)!important}
+
+/* receipts are paper: always light */
+html[data-theme="dark"] #piReceiptPreview,html[data-theme="dark"] #receiptContent{background:#fff!important;color:#111!important}
+html[data-theme="dark"] #piReceiptPreview *,html[data-theme="dark"] #receiptContent *{color:inherit}
+html[data-theme="dark"] .pi-receipt-box{background:var(--surface)}
+
+/* login keeps its brand gradient; only the card goes dark */
+html[data-theme="dark"] .login-card{box-shadow:0 24px 64px rgba(0,0,0,.5)}
+html[data-theme="dark"] .login-logo h1{-webkit-text-fill-color:var(--text);color:var(--text)}
+
+/* status badges keep their hue, readable on dark */
+html[data-theme="dark"] .badge-blue{color:#A5B4FC}
+html[data-theme="dark"] .badge-purple{color:#C4B5FD}
+html[data-theme="dark"] .om-chip.draft,html[data-theme="dark"] .om-kstatus{color:#A5B4FC}
+html[data-theme="dark"] .kq-queue-pos,html[data-theme="dark"] .kq-col-count{background:var(--surface-2)}
+}
+
+/* ═══ 2026-10-03 · dark design layer — depth, glow, dark sidebar, dark login ═══ */
+@media screen {
+html[data-theme="dark"]{
+  --bg:#090B1A; --surface:#12152E; --surface-2:#191D3B; --card:#12152E;
+  --text:#ECEDFF; --muted:#A1A4CC; --faint:#5C608E;
+  --border:rgba(150,160,255,.10); --border-dk:rgba(150,160,255,.20);
+}
+/* page: soft brand light falling from the top-left, violet glow bottom-right */
+html[data-theme="dark"] body{
+  background:radial-gradient(1100px 620px at 12% -12%,rgba(91,124,250,.16),transparent 62%),
+             radial-gradient(900px 560px at 108% 108%,rgba(139,92,246,.14),transparent 60%),#090B1A;
+  background-attachment:fixed}
+html[data-theme="dark"] :is(.main,.content){background:transparent}
+
+/* surfaces: lit top edge + soft drop, not flat boxes */
+html[data-theme="dark"] :is(.card,.form-panel,.db-panel,.db-strip,.om-tile,.om-cart,.om-order-card,.oc-table,.oc-type,.oc-confirm,.pi-invoice,.pi-due,
+  .pi-block,.rpt-card,.rpt-kpi-row,.bx-stat:not(.hero),.modal,.tb-menu,.notif-panel,.kq-ticket,.stock-value-box .svb-card,.ar-section){
+  background-image:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,0) 42%);
+  border-color:var(--border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 32px -14px rgba(0,0,0,.7)}
+html[data-theme="dark"] :is(.om-tile,.om-order-card,.oc-table,.oc-type,.bx-stat:not(.hero)):hover{border-color:rgba(124,147,251,.45);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(124,147,251,.18),0 14px 34px -12px rgba(37,99,235,.35)}
+
+/* sidebar: deep indigo night, brand light at the top */
+html[data-theme="dark"] .sidebar{background:linear-gradient(180deg,#11143A 0%,#0C0E28 45%,#090A1E 100%);border-right:1px solid rgba(150,160,255,.08)}
+/* the glow needs a positioned menu; on phones the menu is already positioned (fixed drawer) and must stay so */
+@media(min-width:769px){html[data-theme="dark"] .sidebar{position:relative}}
+html[data-theme="dark"] .sidebar::before{content:'';position:absolute;inset:0 0 auto 0;height:220px;pointer-events:none;
+  background:radial-gradient(260px 160px at 30% 0%,rgba(91,124,250,.22),transparent 70%)}
+html[data-theme="dark"] .sidebar>*{position:relative}
+html[data-theme="dark"] .sb-logo .brand-mark{background:linear-gradient(135deg,#2563EB,#7C3AED);box-shadow:0 6px 18px -4px rgba(91,124,250,.6)}
+html[data-theme="dark"] .sb-label{color:rgba(161,164,204,.5)}
+html[data-theme="dark"] .nav-item,html[data-theme="dark"] .nav-item-logout{color:#A9ADD6}
+html[data-theme="dark"] .nav-item:hover,html[data-theme="dark"] .nav-item-logout:hover{background:rgba(255,255,255,.04);color:#fff}
+html[data-theme="dark"] .nav-item.active{color:#fff}
+html[data-theme="dark"] .nav-item.active .ic{color:#A5B4FC}
+html[data-theme="dark"] .nav-indicator{background:linear-gradient(90deg,rgba(91,124,250,.24),rgba(139,92,246,.10));
+  box-shadow:inset 2px 0 0 #7C93FB,0 0 22px -6px rgba(91,124,250,.55)}
+html[data-theme="dark"] .sb-avatar{background:linear-gradient(135deg,#2563EB,#7C3AED)}
+html[data-theme="dark"] .sb-bottom{border-top-color:rgba(150,160,255,.08)}
+html[data-theme="dark"] .sb-section+.sb-section{border-color:rgba(150,160,255,.06)}
+
+/* top bar: glass over the page */
+html[data-theme="dark"] .topbar{background:rgba(11,13,31,.72);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-bottom-color:rgba(150,160,255,.08)}
+html[data-theme="dark"] .tb-btn:hover{background:rgba(255,255,255,.05);border-color:rgba(150,160,255,.12)}
+
+/* actions glow softly */
+html[data-theme="dark"] .btn-primary{box-shadow:0 8px 22px -8px rgba(124,58,237,.75),inset 0 1px 0 rgba(255,255,255,.12)}
+html[data-theme="dark"] .btn-green{box-shadow:0 8px 22px -8px rgba(14,168,117,.6),inset 0 1px 0 rgba(255,255,255,.12)}
+html[data-theme="dark"] .btn-ghost{background:rgba(255,255,255,.03)}
+html[data-theme="dark"] .form-input{background-color:rgba(255,255,255,.03);border-color:rgba(150,160,255,.16)}
+html[data-theme="dark"] .form-input:focus{border-color:#8B5CF6;box-shadow:0 0 0 3px rgba(139,92,246,.25),0 0 18px -4px rgba(139,92,246,.5)}
+html[data-theme="dark"] .tab.active{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(150,160,255,.14)}
+
+/* key figures carry a little light */
+html[data-theme="dark"] .db-cell.lead .db-cell-value,html[data-theme="dark"] .pi-due-amt,html[data-theme="dark"] .om-total{
+  background:linear-gradient(90deg,#FFFFFF,#B9C4FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme="dark"] .db-cell.lead{background:linear-gradient(135deg,rgba(91,124,250,.10),transparent 70%)}
+html[data-theme="dark"] .bx-stat.hero{box-shadow:0 14px 40px -12px rgba(51,65,216,.75),inset 0 1px 0 rgba(255,255,255,.15)}
+html[data-theme="dark"] .om-tile-qty{background:linear-gradient(135deg,#2563EB,#7C3AED);box-shadow:0 0 0 2px var(--surface),0 4px 12px rgba(91,124,250,.5)}
+html[data-theme="dark"] .kq-col{background:rgba(255,255,255,.02)}
+html[data-theme="dark"] .kq-ticket.ready{box-shadow:inset 3px 0 0 var(--green),0 12px 32px -14px rgba(14,168,117,.4)}
+html[data-theme="dark"] .tst{background:rgba(24,27,58,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:rgba(150,160,255,.18)}
+html[data-theme="dark"] .overlay{background:rgba(4,5,15,.66);backdrop-filter:blur(3px)}
+
+/* start-up + sign-in screens in the night palette */
+html[data-theme="dark"] :is(#boot,#bootFlash){background:radial-gradient(700px 420px at 50% 40%,rgba(91,124,250,.20),transparent 70%),#090B1A}
+html[data-theme="dark"] :is(#boot,#bootFlash) .brand-mark{background:linear-gradient(135deg,#2563EB,#7C3AED);box-shadow:0 10px 30px -6px rgba(91,124,250,.65)}
+
+/* ── LOGIN — dark ── */
+html[data-theme="dark"] .login-wrap{overflow:hidden;
+  background:radial-gradient(760px 520px at 18% 12%,rgba(109,40,217,.42),transparent 62%),
+             radial-gradient(680px 520px at 86% 88%,rgba(37,99,235,.32),transparent 62%),
+             linear-gradient(135deg,#140B33 0%,#0C0824 52%,#06060F 100%)}
+html[data-theme="dark"] .login-wrap::before,html[data-theme="dark"] .login-wrap::after{content:'';position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;opacity:.55}
+html[data-theme="dark"] .login-wrap::before{width:340px;height:340px;left:8%;top:14%;background:#6D28D9;animation:orbA 16s ease-in-out infinite alternate}
+html[data-theme="dark"] .login-wrap::after{width:300px;height:300px;right:10%;bottom:10%;background:#2563EB;animation:orbB 18s ease-in-out infinite alternate}
+@keyframes orbA{to{transform:translate(60px,40px) scale(1.12)}}
+@keyframes orbB{to{transform:translate(-50px,-36px) scale(1.1)}}
+html[data-theme="dark"] .login-card{position:relative;z-index:1;background:rgba(17,19,44,.70);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
+  border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 80px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.07)}
+html[data-theme="dark"] .login-logo .brand-mark{background:linear-gradient(135deg,#2563EB,#7C3AED);box-shadow:0 10px 30px -6px rgba(124,58,237,.7)}
+html[data-theme="dark"] .login-logo h1{background:linear-gradient(90deg,#fff,#C7D2FE);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+html[data-theme="dark"] .login-card .form-input{background-color:rgba(255,255,255,.04)}
+html[data-theme="dark"] .login-card .btn-primary{background:linear-gradient(135deg,#7C3AED,#4F46E5);box-shadow:0 12px 28px -10px rgba(124,58,237,.85)}
+html[data-theme="dark"] .login-ims{border-top-color:rgba(255,255,255,.08)}
+
+/* IMS mark: brighter in the dark */
+/* (glass logo: tint set above, no filter) */
+html[data-theme="dark"] .app-foot{opacity:.7}
+html[data-theme="dark"] .sb-ims{color:rgba(219,226,255,.65)}
+html[data-theme="dark"] .sb-ims .ims-logo{opacity:1}
+html[data-theme="dark"] .login-ims{opacity:.92}
+html[data-theme="dark"] .boot-ims .ims-logo{opacity:1}
+}
+@media (prefers-reduced-motion: reduce){html[data-theme="dark"] .login-wrap::before,html[data-theme="dark"] .login-wrap::after{animation:none}}
+/* login card: no backdrop blur (it isolates blending and boxed the IMS logo) */
+@media screen{html[data-theme="dark"] .login-card{background:rgba(17,19,44,.86);backdrop-filter:none;-webkit-backdrop-filter:none}}
+/* dark: let the IMS mark blend with the page background (no isolated layer around the content) */
+@media screen{html[data-theme="dark"] .content{transform:none;z-index:auto;will-change:auto}}
+/* drop-down lists: the opened list must be dark too (a see-through select gives white options with light text) */
+@media screen{html[data-theme="dark"] select,html[data-theme="dark"] select.form-input{background-color:#191D3B}
+html[data-theme="dark"] option,html[data-theme="dark"] optgroup{background-color:#191D3B;color:#ECEDFF}}
+
+/* phones/tablets: main.css + responsive.css force a light page with !important at ≤768px;
+   in dark mode the page must stay dark there too (it was light behind the dark cards) */
+html[data-theme="dark"]{background:#090B1A}
+@media(max-width:768px){
+  html[data-theme="dark"] body{
+    background:radial-gradient(700px 420px at 10% -8%,rgba(91,124,250,.16),transparent 62%),
+               radial-gradient(600px 420px at 110% 108%,rgba(139,92,246,.14),transparent 60%),#090B1A !important;
+    background-attachment:scroll!important}
+}
+/* the install banner's button stays white with blue text (readable on the blue banner) */
+html[data-theme="dark"] #pwaInstallBanner #pwaInstallBtn{background:#fff!important;color:#1E3A8A!important;border:none!important}

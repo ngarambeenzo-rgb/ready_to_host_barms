@@ -1,0 +1,41 @@
+<div class="page" id="page-pos">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Tables & Orders</div>
+      <div class="page-sub" id="posSubtitle">Floor Dashboard</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="loadPOS()">Refresh</button>
+      <button class="btn btn-ghost btn-sm" onclick="showAddTableModal()">+ Add Table</button>
+      <button class="btn btn-primary btn-sm" onclick="startTakeaway()">New Takeaway</button>
+    </div>
+  </div>
+
+  <!-- Tabs: Dine-In / Takeaway -->
+  <div style="display:flex;gap:8px;margin-bottom:18px;border-bottom:2px solid var(--border);padding-bottom:0">
+    <button class="tab active" id="posTab-dinein" onclick="switchPOSTab('dinein',this)" style="background:none;border:none;padding:10px 18px;font-family:inherit;font-size:13px;font-weight:700;color:var(--blue);border-bottom:3px solid var(--blue);cursor:pointer;margin-bottom:-2px">Dine-In</button>
+    <button class="tab" id="posTab-takeaway" onclick="switchPOSTab('takeaway',this)" style="background:none;border:none;padding:10px 18px;font-family:inherit;font-size:13px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-2px">Takeaway</button>
+  </div>
+
+  <!-- Dine-In Grid -->
+  <div id="posDineInGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px"></div>
+
+  <!-- Takeaway List -->
+  <div id="posTakeawayList" style="display:none;margin-bottom:24px"></div>
+
+  <!-- Styles -->
+  <style>
+    .pos-table-card{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;position:relative}
+    .pos-table-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+    .pos-table-card.occupied{border-color:var(--green);background:rgba(14,168,117,.04)}
+    .pos-table-card.cleaning{border-color:var(--orange);background:rgba(255,140,66,.04)}
+    .pos-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+    .pos-dot.free{background:var(--muted)}
+    .pos-dot.occupied{background:var(--green);box-shadow:0 0 8px var(--green);animation:posPulse 2s infinite}
+    .pos-dot.cleaning{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+    @keyframes posPulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .pos-tk-card{background:var(--card);border:2px solid var(--border);border-radius:var(--r-sm);padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+    .pos-tk-card:hover{border-color:var(--blue)}
+    .pos-tk-card.awaiting{border-color:var(--gold)}
+  </style>
+</div>

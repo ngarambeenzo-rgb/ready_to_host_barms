@@ -1,0 +1,39 @@
+<div class="page" id="page-stock-count">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Stock Count</div>
+      <div class="page-sub">Count what is physically on the shelves and compare it with BarMS</div>
+    </div>
+  </div>
+  <div id="scStatus" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px"></div>
+  <div class="ar-filters">
+    <div class="ar-presets" id="scAreas"></div>
+    <div class="ar-custom show" style="margin-left:auto">
+      <label class="form-label" style="margin:0">Count date</label>
+      <input type="date" class="form-input" id="scDate"/>
+    </div>
+  </div>
+  <div class="ar-section">
+    <div class="ar-table-wrap">
+      <table class="ar-table">
+        <thead><tr><th>Item</th><th class="num">BarMS says</th><th class="num" style="min-width:110px">Counted</th><th class="num">Difference</th><th class="num">Value of difference</th></tr></thead>
+        <tbody id="scBody"></tbody>
+        <tfoot><tr><td colspan="3">Total value of differences</td><td></td><td class="num" id="scTotal">RWF 0</td></tr></tfoot>
+      </table>
+    </div>
+    <div class="form-group" style="margin-top:12px"><label class="form-label">Note</label>
+      <input class="form-input" id="scNote" placeholder="e.g. Monthly count, counted by Ann and Bob"/></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="saveStockCount(false)">Save count only</button>
+      <button class="btn btn-primary" id="scApplyBtn" onclick="saveStockCount(true)">Save and set stock to the count</button>
+    </div>
+    <div class="ar-note">Leave an item empty to skip it. "Set stock to the count" records an adjustment for every difference, so nothing changes without a record. Differences are not proof of wrongdoing — check for missing deliveries, breakages or sales first.</div>
+  </div>
+  <div class="ar-section">
+    <div class="ar-section-title">Previous counts</div>
+    <div class="ar-table-wrap"><table class="ar-table">
+      <thead><tr><th>Date</th><th>What</th><th>Counted by</th><th class="num">Items</th><th class="num">Differences</th><th class="num">Value of differences</th><th>Stock adjusted</th><th>Note</th></tr></thead>
+      <tbody id="scHistory"></tbody>
+    </table></div>
+  </div>
+</div>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BarMS Pro — Offline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #5B7CFA 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .logo { font-size: 48px; margin-bottom: 8px; }
+    .app-name { font-size: 22px; font-weight: 700; color: #1E3A8A; margin-bottom: 4px; }
+    .app-sub { font-size: 12px; color: #7C6FA0; margin-bottom: 28px; }
+    .offline-icon { font-size: 56px; margin-bottom: 16px; }
+    .title { font-size: 20px; font-weight: 700; color: #2D1B69; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: #7C6FA0; line-height: 1.5; margin-bottom: 24px; }
+    .info-box {
+      background: #EEF1FF;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .info-box p { font-size: 13px; color: #5B7CFA; font-weight: 600; margin-bottom: 8px; }
+    .info-box ul { list-style: none; }
+    .info-box li { font-size: 12px; color: #4B5563; padding: 3px 0; }
+    .info-box li::before { content: '✅ '; }
+    .info-box li.no::before { content: '❌ '; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #1E3A8A, #2563EB);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      margin-bottom: 10px;
+    }
+    .btn-ghost {
+      background: transparent;
+      border: 2px solid #E5E7EB;
+      color: #6B7280;
+      padding: 12px;
+    }
+    .sync-time { font-size: 11px; color: #9CA3AF; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🍺</div>
+    <div class="app-name">BarMS Pro</div>
+    <div class="app-sub">Bar Management System — Rwanda 🇷🇼</div>
+
+    <div class="offline-icon">📡</div>
+    <div class="title">You are offline</div>
+    <div class="subtitle">
+      No internet connection detected. Some features are unavailable, but you can still view your last saved data.
+    </div>
+
+    <div class="info-box">
+      <p>While offline you can:</p>
+      <ul>
+        <li>View last known dashboard data</li>
+        <li>Browse products and stock levels</li>
+        <li>View sales history</li>
+        <li class="no">Record new sales</li>
+        <li class="no">Add or edit stock</li>
+        <li class="no">View live reports</li>
+      </ul>
+    </div>
+
+    <a href="./" class="btn">↩ Go to App</a>
+    <button class="btn btn-ghost" onclick="window.location.reload()">🔄 Try again</button>
+
+    <div class="sync-time" id="syncTime"></div>
+  </div>
+
+  <script>
+    // Show last sync time if available
+    const lastSync = localStorage.getItem('barms_last_sync');
+    if (lastSync) {
+      const d = new Date(lastSync);
+      document.getElementById('syncTime').textContent =
+        'Last synced: ' + d.toLocaleDateString() + ' at ' + d.toLocaleTimeString();
+    }
+
+    // Auto-reload when internet returns
+    window.addEventListener('online', () => {
+      window.location.href = './';
+    });
+  </script>
+</body>
+</html>

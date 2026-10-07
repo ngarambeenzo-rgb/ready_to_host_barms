@@ -1,0 +1,27 @@
+<div class="page" id="page-kitchen-recipes">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Recipes</div>
+      <div class="page-sub">Define how each menu item is made</div>
+    </div>
+    <button data-perm="canManageItems" class="btn btn-primary btn-sm" onclick="showAddRecipeModal()">+ Add Recipe</button>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--bg);border-bottom:2px solid var(--border)">
+          <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Recipe Name</th>
+          <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Linked Menu Item</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Cost</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Selling Price</th>
+          <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Profit</th>
+          <th style="padding:12px 16px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="krRecipeBody">
+        <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--muted)"><div class="ui-loader"><span class="ul-mark"><i></i><i></i><i></i></span><span class="ul-text">Loading…</span></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
