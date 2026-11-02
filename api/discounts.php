@@ -97,6 +97,18 @@ if ($action === 'policy') {
     jsonOut(['ok' => true, 'bartenderCanDiscount' => bartenderCanDiscount($db), 'managersCan' => getMgrPermissions()['canGiveDiscounts'] ?? false]);
 }
 
+// Active rules and what this person may do, kept by an offline device so it can offer the
+// same discounts without internet (offline.js works them out like discountOptionsForOrder;
+// the server recalculates them when the order syncs)
+if ($action === 'offline_rules') {
+    $rules = $db->query('SELECT id, name, kind, value, source_type, source_id FROM discount_rules WHERE active = 1')->fetchAll();
+    jsonOut(['ok' => true, 'data' => array_map(fn($r) => ['id' => (int)$r['id'], 'name' => $r['name'], 'kind' => $r['kind'], 'value' => (float)$r['value'],
+             'sourceType' => $r['source_type'], 'sourceId' => (int)$r['source_id']], $rules),
+             'canApply' => canApplyDiscounts($db, $sess), 'canFree' => $sess['role'] === 'Owner',
+             // who may tick them, so the device can decide for whoever signs in offline
+             'policy' => ['bartender' => bartenderCanDiscount($db), 'manager' => (bool)(getMgrPermissions()['canGiveDiscounts'] ?? false)]]);
+}
+
 if ($action === 'options') {
     $orderId = (int)($_GET['orderId'] ?? 0);
     $opts = discountOptionsForOrder($db, $orderId);

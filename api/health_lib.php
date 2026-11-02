@@ -159,6 +159,26 @@ function hlBusiness(PDO $db): array {
     $cash = $q("SELECT COUNT(*), COALESCE(SUM(difference),0) FROM shifts WHERE status = 'closed' AND difference <> 0 AND closed_at > NOW() - INTERVAL 30 DAY");
     $out[] = hlCheck('biz_cash', 'Business', 'Cash drawer differences (30 days)', $cash && $cash[0] > 0 ? 'warn' : 'ok',
         $cash && $cash[0] > 0 ? "{$cash[0]} shift(s), total " . number_format((float)$cash[1]) . " RWF. Reported as counted — never adjusted." : 'Every closed shift matched');
+    // Items whose cost is unknown make profit look bigger than it is. Listed by name; never filled in automatically.
+    $names = function (string $sql) use ($db) { try { return $db->query($sql)->fetchAll(PDO::FETCH_COLUMN); } catch (Throwable $e) { return null; } };
+    $lists = [
+        'drinks'   => $names("SELECT name FROM bar_items WHERE active = 1 AND type = 'direct' AND cost_price <= 0 ORDER BY name"),
+        'cocktails'=> $names("SELECT bi.name FROM bar_items bi WHERE bi.active = 1 AND bi.type = 'recipe' AND COALESCE((SELECT SUM(r.qty * g.cost_per_unit) FROM bar_recipe_ingredients r JOIN bar_ingredients g ON g.id = r.ingredient_id WHERE r.recipe_id = bi.recipe_id), 0) <= 0 ORDER BY bi.name"),
+        'bar ingredients' => $names("SELECT g.name FROM bar_ingredients g WHERE g.cost_per_unit <= 0 AND EXISTS (SELECT 1 FROM bar_recipe_ingredients r WHERE r.ingredient_id = g.id) ORDER BY g.name"),
+        'dishes'   => $names("SELECT m.name FROM kitchen_menu m WHERE m.status = 'active' AND COALESCE((SELECT SUM(r.qty * k.cost_per_unit) FROM recipe_ingredients r JOIN kitchen_ingredients k ON k.id = r.ingredient_id WHERE r.recipe_id = m.recipe_id), 0) <= 0 ORDER BY m.name"),
+        'kitchen ingredients' => $names("SELECT k.name FROM kitchen_ingredients k WHERE k.cost_per_unit <= 0 AND EXISTS (SELECT 1 FROM recipe_ingredients r WHERE r.ingredient_id = k.id) ORDER BY k.name"),
+    ];
+    $parts = []; $count = 0; $unknown = false;
+    foreach ($lists as $label => $rows) {
+        if ($rows === null) { $unknown = true; continue; }
+        if (!$rows) continue;
+        $count += count($rows);
+        $parts[] = count($rows) . " $label (" . implode(', ', array_slice($rows, 0, 4)) . (count($rows) > 4 ? ', …' : '') . ')';
+    }
+    $out[] = hlCheck('biz_missing_cost', 'Business', 'Items without a cost',
+        $count ? 'warn' : 'ok',
+        $count ? implode('; ', $parts) . '. Profit on these is overstated — enter their buy cost.' : ($unknown ? 'Could not be fully checked' : 'Every active item has a cost'),
+        ['count' => $count]);
     return $out;
 }
 

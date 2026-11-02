@@ -10,6 +10,7 @@ let _backdateReason = null;
 
 // ── Init: restore state from server session on page load ──
 async function initBackdateMode() {
+  if (typeof session === 'undefined' || !session.userId) return;   // nobody signed in: the server would answer 401
   try {
     const res = await apiGet('misc', 'backdate_status');
     if (res.active) {
@@ -206,5 +207,4 @@ async function showBackdateLog() {
   }
 }
 
-// Init on load
-document.addEventListener('DOMContentLoaded', initBackdateMode);
+// Started by enterApp() once someone is signed in (not on page load: the sign-in screen has no session)

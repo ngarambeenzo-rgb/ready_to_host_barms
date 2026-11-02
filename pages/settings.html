@@ -73,6 +73,18 @@
               <button class="btn btn-primary" onclick="saveStockCountInterval()">Save</button>
             </div>
           </div>
+          <div class="form-panel" id="offlinePanel">
+            <div class="form-panel-title">Offline devices <span style="font-size:11px;font-weight:400;color:var(--muted)">— Owner only</span></div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Only these two devices keep working when there is no internet. Everything done on them offline is saved on the device, in the name of the person who did it, and sent as soon as the internet is back — even if nobody is signed in. Other devices show "No internet — use the main device". Staff can sign in offline only on a device where they have signed in online before.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+              <div class="form-group" style="margin:0;min-width:240px;flex:1"><label class="form-label">Main device (selling — Manager or Bartender)</label>
+                <select class="form-input" id="offMain"></select></div>
+              <div class="form-group" style="margin:0;min-width:240px;flex:1"><label class="form-label">Owner's device (Owner only)</label>
+                <select class="form-input" id="offOwner"></select></div>
+              <button class="btn btn-primary" onclick="saveOfflineDevices()">Save</button>
+            </div>
+            <div class="form-hint" id="offThisDevice" style="margin-top:8px"></div>
+          </div>
           <div class="form-panel" id="discountPanel">
             <div class="form-panel-title">Discounts <span style="font-size:11px;font-weight:400;color:var(--muted)">— Owner only</span></div>
             <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Choose the items that get a discount and how much. Staff cannot type their own discount — at payment they can only tick the discounts you set here, and only if you allow them below.</p>

@@ -49,7 +49,8 @@ function tenantSignedOut(j) {
 
 // wipe this device's offline copies of the previous client
 async function tenantWipeLocal() {
-  for (const store of ['products', 'sync_queue', 'cache_meta']) {
+  if (typeof offlineSetRole === 'function') await offlineSetRole(null);   // also forgets offline sign-ins
+  for (const store of ['products', 'sync_queue', 'cache_meta', 'read_cache', 'offline_orders']) {
     try {
       const db = await openDB();
       await new Promise(res => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).clear(); tx.oncomplete = res; tx.onerror = res; });

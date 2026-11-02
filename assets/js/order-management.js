@@ -182,7 +182,7 @@ function _omStopKitchenPolling() {
 
 async function _omRenderKitchenStatus() {
   const page = document.getElementById('page-order-management');
-  if (!page || !page.classList.contains('active') || !_omOrder) { _omStopKitchenPolling(); return; }
+  if (!page || !page.classList.contains('active') || !_omOrder || document.getElementById('appShell')?.style.display === 'none') { _omStopKitchenPolling(); return; }
 
   const res = await apiGet('kitchen_orders', 'order_status', { orderId: _omOrder.orderId });
   if (!res.ok) return;

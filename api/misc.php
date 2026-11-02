@@ -37,6 +37,63 @@ if ($action === 'stock_count_interval_save') {
     jsonOut(['ok' => true]);
 }
 
+// ── OFFLINE DEVICES (Owner) ───────────────────────────────────
+// The client's devices approved in IMS, and which two may work without internet
+if ($action === 'offline_devices') {
+    requireRole(['Owner']);
+    $t = $GLOBALS['BARMS_TENANT'] ?? null;
+    if (!$t) jsonOut(['ok' => false, 'error' => 'This device is not activated for a BarMS client.'], 403);
+    $ims = '`' . str_replace('`', '', tenantImsDb()) . '`';
+    $st = $db->prepare("SELECT device_uuid, device_name, device_type, last_sync FROM $ims.ims_devices
+                        WHERE client_id = ? AND status = 'approved' ORDER BY last_sync DESC");
+    $st->execute([(int)$t['client']]);
+    $devices = array_map(fn($d) => [
+        'uuid' => $d['device_uuid'], 'name' => $d['device_name'], 'type' => $d['device_type'], 'lastSync' => $d['last_sync'],
+    ], $st->fetchAll());
+    $row = $db->query('SELECT offline_main_device, offline_owner_device FROM settings LIMIT 1')->fetch() ?: [];
+    jsonOut(['ok' => true, 'devices' => $devices,
+             'main' => $row['offline_main_device'] ?? null, 'owner' => $row['offline_owner_device'] ?? null,
+             'thisDevice' => trim($_SERVER['HTTP_X_BARMS_DEVICE'] ?? '')]);
+}
+
+if ($action === 'offline_devices_save') {
+    $sess = requireRole(['Owner']);
+    $t = $GLOBALS['BARMS_TENANT'] ?? null;
+    if (!$t) jsonOut(['ok' => false, 'error' => 'This device is not activated for a BarMS client.'], 403);
+    $body  = json_decode(file_get_contents('php://input'), true) ?? [];
+    $main  = trim((string)($body['main'] ?? ''));
+    $owner = trim((string)($body['owner'] ?? ''));
+    if ($main !== '' && $main === $owner) jsonOut(['ok' => false, 'error' => 'Choose two different devices'], 400);
+    $ims = '`' . str_replace('`', '', tenantImsDb()) . '`';
+    $chk = $db->prepare("SELECT COUNT(*) FROM $ims.ims_devices WHERE client_id = ? AND device_uuid = ? AND status = 'approved'");
+    foreach ([$main, $owner] as $uuid) {
+        if ($uuid === '') continue;
+        $chk->execute([(int)$t['client'], $uuid]);
+        if (!$chk->fetchColumn()) jsonOut(['ok' => false, 'error' => 'That device is not approved for this business'], 400);
+    }
+    $db->prepare('UPDATE settings SET offline_main_device = ?, offline_owner_device = ? WHERE id = 1')
+       ->execute([$main ?: null, $owner ?: null]);
+    $db->prepare('INSERT INTO audit_log (action_type, details, done_by) VALUES (?,?,?)')
+       ->execute(['SETTINGS', 'Offline devices changed (main: ' . ($main ? substr($main, 0, 8) : 'none') . ', owner: ' . ($owner ? substr($owner, 0, 8) : 'none') . ')', $sess['full_name']]);
+    jsonOut(['ok' => true]);
+}
+
+// Offline records the server refused when they synced (shown on System Health)
+if ($action === 'offline_rejects') {
+    requireRole(['Owner']);
+    $rows = $db->query("SELECT id, device_uuid, user_name, endpoint, payload, offline_at, error, created_at
+                        FROM offline_rejects WHERE status = 'open' ORDER BY id DESC LIMIT 200")->fetchAll();
+    jsonOut(['ok' => true, 'data' => $rows]);
+}
+
+if ($action === 'offline_reject_resolve') {
+    $sess = requireRole(['Owner']);
+    $body = json_decode(file_get_contents('php://input'), true) ?? [];
+    $db->prepare("UPDATE offline_rejects SET status = 'resolved', resolved_by = ?, resolved_at = NOW() WHERE id = ? AND status = 'open'")
+       ->execute([$sess['full_name'], (int)($body['id'] ?? 0)]);
+    jsonOut(['ok' => true]);
+}
+
 if ($action === 'settings_save') {
     requirePerm('canEditSettings');
     $body    = json_decode(file_get_contents('php://input'), true);
@@ -454,8 +511,14 @@ if ($action === 'cust_debt_delete') {
 //  NOTIFICATIONS
 // ══════════════════════════════════════════════════════════════
 if ($action === 'notif_list') {
-    requireAuth();
-    $stmt = $db->query('SELECT * FROM notifications ORDER BY id DESC LIMIT 50');
+    $sess = requireAuth();
+    // a notice with for_roles (e.g. "Alice started work", for the Owner) is shown only to those roles
+    try {
+        $stmt = $db->prepare('SELECT * FROM notifications WHERE for_roles IS NULL OR FIND_IN_SET(?, for_roles) ORDER BY id DESC LIMIT 50');
+        $stmt->execute([$sess['role']]);
+    } catch (Exception $e) {   // migration not run yet: no for_roles column
+        $stmt = $db->query('SELECT * FROM notifications ORDER BY id DESC LIMIT 50');
+    }
     $rows = $stmt->fetchAll();
     foreach ($rows as &$r) {
         $r['id']      = (int)$r['id'];
@@ -556,9 +619,12 @@ $month = substr($today, 0, 7);
 
     // Unread notifications
     try {
-        $unreadNotifs = (int)$db->query("SELECT COUNT(*) AS cnt FROM notifications WHERE is_read=0")->fetch()['cnt'];
+        $st = $db->prepare("SELECT COUNT(*) AS cnt FROM notifications WHERE is_read=0 AND (for_roles IS NULL OR FIND_IN_SET(?, for_roles))");
+        $st->execute([$_SESSION['role'] ?? '']);
+        $unreadNotifs = (int)$st->fetch()['cnt'];
     } catch(Exception $e) {
-        $unreadNotifs = 0;
+        try { $unreadNotifs = (int)$db->query("SELECT COUNT(*) AS cnt FROM notifications WHERE is_read=0")->fetch()['cnt']; }
+        catch(Exception $e2) { $unreadNotifs = 0; }
     }
 
     // COGS today (legacy products table)

@@ -27,6 +27,15 @@ if ($isLocalHost) {
     define('SESSION_IDLE_TIMEOUT', 600);
     ini_set('session.gc_maxlifetime', '86400');
 
+// One clock for the whole app: Rwanda time (UTC+2, no summer time). PHP's date() and MySQL's
+// NOW() used to follow different server settings and could be hours apart, which put records
+// near midnight on the wrong day. Every connection sets the same zone (see barmsDbClock).
+const BARMS_TZ_OFFSET = '+02:00';
+date_default_timezone_set('Africa/Kigali');
+function barmsDbClock(PDO $db): void {
+    try { $db->exec("SET time_zone = '" . BARMS_TZ_OFFSET . "'"); } catch (Throwable $e) { error_log('[BarMS] time zone not set: ' . $e->getMessage()); }
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 86400,
@@ -97,6 +106,7 @@ function getDB() {
             http_response_code(500);
             die(json_encode(['ok' => false, 'error' => 'DB connection failed']));
         }
+        barmsDbClock($pdo);
         // a session signed in before client separation existed has no client → sign in again once
         if (!empty($_SESSION['user_id']) && !isset($_SESSION['tenant_client']) && PHP_SAPI !== 'cli') {
             $_SESSION = [];
@@ -109,6 +119,11 @@ function getDB() {
 }
 
 function jsonOut($data, $code = 200) {
+    // an offline record the server refuses for a business reason is kept for the Owner
+    if (!empty($_SESSION['offline']) && is_array($data) && empty($data['ok']) && $code >= 400 && $code < 500 && $code != 401) {
+        offlineRecordRejected($data);
+        $data['offlineRejected'] = true;
+    }
     idempotencyFinish($data, (int)$code);
     http_response_code($code);
     header('Content-Type: application/json');
@@ -118,6 +133,7 @@ function jsonOut($data, $code = 200) {
 }
 
 function requireAuth() {
+    if (offlineTokenUser()) return $_SESSION;   // an offline record is always its maker's, even if someone else is signed in
     if (empty($_SESSION['user_id'])) {
         jsonOut(['ok' => false, 'error' => 'Not authenticated'], 401);
     }
@@ -150,6 +166,125 @@ function requireRole($roles) {
         jsonOut(['ok' => false, 'error' => 'Access denied'], 403);
     }
     return $sess;
+}
+
+// ── OFFLINE DEVICES ──────────────────────────────────────────────
+// The Owner picks two devices that keep working without internet (Settings → Offline devices):
+//   main  — the selling device (Manager's or Bartender's), any staff except Kitchen
+//   owner — the Owner's device, Owner only
+// While someone signs in online on one of them, the device gets a token for that person.
+// Records made offline are sent later with it (header X-Barms-Offline-Token), so they sync
+// even when nobody is signed in, and each is saved in the name of the person who made it.
+// A token only sends records: POST, the actions in OFFLINE_ACTIONS, and never a signed-in session.
+const OFFLINE_ACTIONS = [
+    'sales.php'    => ['record'],
+    'expenses.php' => ['save'],
+    'orders.php'   => ['offline_order', 'add_item', 'update_item', 'remove_item', 'save_note', 'validate', 'pay', 'refund', 'refund_request'],
+    'misc.php'     => ['void_request_submit'],
+    'shifts.php'   => ['open', 'close'],
+    'attendance.php' => ['start', 'end'],
+    // stage 4: stock (deltas, replayed oldest first) and money paid for it
+    'bar-inventory.php' => ['item_add_stock', 'ingredient_receive', 'record_breakage'],
+    'kitchen2.php'      => ['stock_receive', 'stock_adjust'],
+    'stockcount.php'    => ['save'],
+    'suppliers.php'     => ['pay'],
+];
+const OFFLINE_TOKEN_DAYS = 30;
+// how old an offline record may be and still keep its own time: the device locks after 14 days
+// without internet, but it may come back online much later (older → saved at the time it arrives)
+const OFFLINE_MAX_AGE_DAYS = 366;
+
+function offlineDeviceRole(PDO $db, string $device): ?string {
+    if ($device === '') return null;
+    try {
+        $row = $db->query('SELECT offline_main_device, offline_owner_device FROM settings LIMIT 1')->fetch();
+    } catch (Exception $e) { return null; }   // migration not run yet
+    if (!$row) return null;
+    if ($row['offline_main_device'] === $device) return 'main';
+    if ($row['offline_owner_device'] === $device) return 'owner';
+    return null;
+}
+
+function offlineRoleAllows(?string $deviceRole, string $userRole): bool {
+    if ($deviceRole === 'main')  return $userRole !== 'Kitchen';
+    if ($deviceRole === 'owner') return $userRole === 'Owner';
+    return false;
+}
+
+// The user an offline token belongs to (null = no token sent). A bad token ends the request.
+function offlineTokenUser(): ?array {
+    static $user = false;
+    if ($user !== false) return $user;
+    $user = null;
+    $raw = strtolower(trim($_SERVER['HTTP_X_BARMS_OFFLINE_TOKEN'] ?? ''));
+    if ($raw === '') return null;
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonOut(['ok' => false, 'error' => 'Offline tokens can only send records'], 403);
+    $endpoint = basename($_SERVER['SCRIPT_NAME'] ?? '');
+    if (!in_array($_GET['action'] ?? '', OFFLINE_ACTIONS[$endpoint] ?? [], true)) {
+        jsonOut(['ok' => false, 'error' => 'This action cannot be sent from an offline record'], 403);
+    }
+    $db = getDB();
+    $device = trim($_SERVER['HTTP_X_BARMS_DEVICE'] ?? '');
+    $u = false;
+    if (!empty($GLOBALS['BARMS_TENANT']) && $device !== '' && preg_match('/^[a-f0-9]{64}$/', $raw)) {
+        $st = $db->prepare('SELECT u.* FROM api_tokens t JOIN users u ON u.id = t.user_id
+                            WHERE t.token = ? AND t.device_uuid = ? AND t.expires_at > NOW() AND u.active = 1 LIMIT 1');
+        $st->execute([hash('sha256', $raw), $device]);
+        $u = $st->fetch();
+    }
+    if (!$u) jsonOut(['ok' => false, 'error' => 'offline_token_invalid', 'message' => 'This person must sign in online on this device once to send the records they made offline.'], 401);
+    // nothing of this request may change a session: not create a signed-in one, and not
+    // touch the session of someone signed in on this browser (its cookie is sent too, since
+    // the hosting's bot protection needs the browser's cookies)
+    if (session_status() === PHP_SESSION_ACTIVE) session_abort();
+    $_SESSION = ['user_id' => $u['id'], 'username' => $u['username'], 'full_name' => $u['full_name'], 'role' => $u['role'], 'offline' => true];
+    // This connection's clock runs at the time the record was made: every NOW() and every
+    // created_at default in any action then keeps the original time. (The token was checked
+    // above on the real clock; the idempotency store uses its own connection.)
+    $at = $_SERVER['HTTP_X_BARMS_OFFLINE_AT'] ?? '';
+    if (ctype_digit($at)) {
+        $t = intdiv((int)$at, 1000);
+        if ($t > time() - OFFLINE_MAX_AGE_DAYS * 86400 && $t <= time() + 300) $db->exec('SET timestamp = ' . (int)$t);
+    }
+    $user = $u;
+    return $u;
+}
+
+// When a record was really made, as a MySQL DATETIME (same clock as NOW()).
+// Offline records carry the device time (corrected by the app); anything else is now.
+function barmsActionTime(): string {
+    $db = getDB();
+    $at = $_SERVER['HTTP_X_BARMS_OFFLINE_AT'] ?? '';
+    if (!empty($_SESSION['offline']) && ctype_digit($at)) {
+        $t = intdiv((int)$at, 1000);
+        if ($t > time() - OFFLINE_MAX_AGE_DAYS * 86400 && $t <= time() + 300) {
+            $st = $db->prepare('SELECT FROM_UNIXTIME(?)');
+            $st->execute([$t]);
+            return (string)$st->fetchColumn();
+        }
+    }
+    return (string)$db->query('SELECT NOW()')->fetchColumn();
+}
+
+// Keep a refused offline record for the Owner (System Health). Separate connection, so a
+// rolled-back transaction cannot take it away; the idempotency key stops duplicates on retry.
+function offlineRecordRejected(array $data): void {
+    try {
+        $side = barmsSideDB();
+        if (!$side) return;
+        $side->prepare('INSERT IGNORE INTO offline_rejects (idem_key, device_uuid, user_id, user_name, endpoint, payload, offline_at, error)
+                        VALUES (?,?,?,?,?,?,?,?)')
+             ->execute([
+                 $_SERVER['HTTP_X_IDEMPOTENCY_KEY'] ?? null,
+                 mb_substr(trim($_SERVER['HTTP_X_BARMS_DEVICE'] ?? ''), 0, 64),
+                 $_SESSION['user_id'] ?? null,
+                 $_SESSION['full_name'] ?? null,
+                 mb_substr(basename($_SERVER['SCRIPT_NAME'] ?? '') . '?' . ($_GET['action'] ?? ''), 0, 80),
+                 incidentClean((string)file_get_contents('php://input'), 4000),
+                 barmsActionTime(),
+                 mb_substr((string)($data['message'] ?? $data['error'] ?? 'Refused'), 0, 255),
+             ]);
+    } catch (Throwable $e) { error_log('[BarMS] offline reject log failed: ' . $e->getMessage()); }
 }
 
 // Manager permissions the Owner can grant: key => [db column, default if column missing]
@@ -204,6 +339,14 @@ function requirePerm($perm, $alsoRoles = []) {
 function currentShiftId(): ?int {
     if (empty($_SESSION['user_id'])) return null;
     try {
+        if (!empty($_SESSION['offline'])) {
+            // an offline record belongs to the shift that was open when it was made
+            $at = barmsActionTime();
+            $st = getDB()->prepare("SELECT id FROM shifts WHERE user_id = ? AND opened_at <= ? AND (closed_at IS NULL OR closed_at >= ?) ORDER BY id DESC LIMIT 1");
+            $st->execute([(int)$_SESSION['user_id'], $at, $at]);
+            $id = $st->fetchColumn();
+            return $id ? (int)$id : null;
+        }
         $st = getDB()->prepare("SELECT id FROM shifts WHERE user_id = ? AND status = 'open' ORDER BY id DESC LIMIT 1");
         $st->execute([(int)$_SESSION['user_id']]);
         $id = $st->fetchColumn();
@@ -229,6 +372,8 @@ function cleanProductType($t): ?string {
 
 function requireCsrf() {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+    // offline records carry their own token in a header a web page cannot send for us
+    if (offlineTokenUser()) { idempotencyStart(); return; }
     if (empty($_SESSION['csrf'])) {
         $_SESSION['csrf'] = bin2hex(random_bytes(32));
     }
@@ -312,10 +457,15 @@ function requireToken() {
     return $user;
 }
 
+// Only BarMS's own site may call the API with the user's cookies. (Every origin used to be
+// allowed, so any other website could act as a signed-in user and read the answers.)
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if ($origin) {
+$originHost = strtolower((string)parse_url($origin, PHP_URL_HOST));
+$ownHost = strtolower(explode(':', $_SERVER['HTTP_HOST'] ?? '')[0]);
+if ($origin && $originHost !== '' && $originHost === $ownHost) {
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Credentials: true');
+    header('Vary: Origin');
 }
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-CSRF-Token, Authorization');

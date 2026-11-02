@@ -15,13 +15,13 @@ const PAGE_TITLES={
       'stock':'Stock Purchase','products':'Products','expenses':'Expenses','advanced-reports':'Advanced Reports','suppliers':'Suppliers','stock-count':'Stock Count','cashbook':'Cash Book','assets':'Assets & Worth','system-health':'System Health','sales':'Sales','quicksale':'Quick Sale',
       'kitchen-dashboard':'Kitchen Dashboard','kitchen-menu':'Menu','kitchen-recipes':'Recipes','kitchen-ingredients':'Ingredients','reports':'Reports',
       'charts':'Charts','employees':'Employees','custdebts':'Customer Debts',
-      'voidreqs':'Requests','audit':'Audit Log','settings':'Settings','support':'Help & support'},
+      'voidreqs':'Requests','audit':'Audit Log','settings':'Settings','support':'Help & support','attendance':'Attendance'},
   fr:{'dashboard':'Tableau de Bord','order-creation':'Création Commande','order-management':'Gestion Commande',
       'payment-invoice':'Paiement & Facture','bar-sales':'Ventes Bar',
       'bar-items':'Articles','bar-ingredients':'Ingrédients','bar-movements':'Mouvements de Stock',
       'kitchen-dashboard':'Tableau Cuisine','kitchen-menu':'Menu','kitchen-recipes':'Recettes','kitchen-ingredients':'Ingrédients','kitchen-queue':'File Cuisine','expenses':'Dépenses','advanced-reports':'Rapports Avancés','suppliers':'Fournisseurs','stock-count':'Inventaire Physique','cashbook':'Livre de Caisse','assets':'Biens & Valeur','system-health':'Santé du système','reports':'Rapports','charts':'Graphiques','employees':'Employés',
       'custdebts':'Dettes Clients','voidreqs':'Demandes',
-      'audit':"Journal d'Audit",'settings':'Paramètres','support':'Aide et assistance'}
+      'audit':"Journal d'Audit",'settings':'Paramètres','support':'Aide et assistance','attendance':'Présence'}
 };
 
 // ── SHOW PAGE ─────────────────────────────────────
@@ -67,6 +67,7 @@ async function showPage(id){
   if(id==='voidreqs') loadVoidRequests();
   if(id==='support') loadSupport();
   if(id==='audit') loadAuditLog();
+  if(id==='attendance') loadAttendance();
   if(id==='settings'){loadSettings();loadUsers();loadMgrPermissions();loadDiscountSettings();setTimeout(loadSettingsPageData,400);}
 }
 
@@ -139,6 +140,7 @@ function translateStaticHTML(d,isEN){
     'nav-employees':isEN?'Employees':'Employés',
     'nav-custdebts':isEN?'Customer Debts':'Dettes Clients',
     'nav-voidreqs':isEN?'Requests':'Demandes',
+    'nav-attendance':isEN?'Attendance':'Présence',
     'nav-audit':isEN?'Audit Log':"Journal d'Audit",
     'nav-settings':isEN?'Settings':'Paramètres',
   };
@@ -185,6 +187,7 @@ function applyLanguage(){
   if(activePage){
     const pid=activePage.id.replace('page-','');
     setTimeout(()=>{
+      if(typeof session==='undefined'||!session.userId)return;   // sign-in screen: nothing to reload
       if(pid==='dashboard')  loadDashboard();
       if(pid==='sales')      {loadSaleProducts();loadSalesHistory(0,null);}
       if(pid==='quicksale')  loadQsProducts();

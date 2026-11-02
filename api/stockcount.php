@@ -63,14 +63,25 @@ if ($action === 'save') {
             $get->execute([(int)$l['id']]);
             $it = $get->fetch();
             if (!$it) throw new RuntimeException('An item on the count sheet was not found');
-            $expected = (float)$it['qty'];
+            // A count made offline is compared with the stock AT THE TIME OF COUNTING: movements
+            // recorded after it (other devices may sync first) are taken out, and kept when the
+            // count is applied.
+            $later = 0.0;
+            if (!empty($_SESSION['offline'])) {
+                $mv = $area === 'kitchen_ingredient'
+                    ? $db->prepare('SELECT COALESCE(SUM(qty),0) FROM kitchen_stock_movements WHERE ingredient_id = ? AND created_at > NOW()')
+                    : $db->prepare('SELECT COALESCE(SUM(qty_change),0) FROM bar_movements WHERE ' . ($area === 'bar_item' ? 'item_id' : 'ingredient_id') . ' = ? AND created_at > NOW()');
+                $mv->execute([$it['id']]);   // NOW() = the time of the count (offline clock)
+                $later = (float)$mv->fetchColumn();
+            }
+            $expected = round((float)$it['qty'] - $later, 3);
             $variance = round($counted - $expected, 3);
             $db->prepare('INSERT INTO stock_count_lines (count_id, item_id, item_name, unit, expected, counted, variance, unit_cost) VALUES (?,?,?,?,?,?,?,?)')
                ->execute([$countId, $it['id'], $it['name'], $it['unit'], $expected, $counted, $variance, $it['cost']]);
             $n++;
             $totalVar += $variance * (float)$it['cost'];
             if ($apply && abs($variance) > 0.0005) {
-                $db->prepare("UPDATE {$a['table']} SET {$a['qty']} = ? WHERE id = ?")->execute([$counted, $it['id']]);
+                $db->prepare("UPDATE {$a['table']} SET {$a['qty']} = ? WHERE id = ?")->execute([round($counted + $later, 3), $it['id']]);
                 $reason = "Stock count #$countId on $date";
                 $cost = round(abs($variance) * (float)$it['cost'], 2);
                 if ($area === 'kitchen_ingredient') {

@@ -293,6 +293,7 @@ const AR_SHIFT_COLS = [
   { k: 'user', l: 'Staff' }, { k: 'device', l: 'Device' }, { k: 'openedAt', l: 'Opened' }, { k: 'closedAt', l: 'Closed', f: r => r.closedAt ? esc(r.closedAt) : '<span class="ar-flag">open</span>' },
   { k: 'openingFloat', l: 'Start cash', t: 'money' }, { k: 'expected', l: 'Expected', t: 'money', sum: true }, { k: 'counted', l: 'Counted', t: 'money', sum: true },
   { k: 'difference', l: 'Difference', t: 'money', sum: true, f: r => r.difference === null ? '—' : `<span class="${Math.abs(r.difference) >= 1 ? (r.difference < 0 ? 'ar-bad' : 'ar-warn') : 'ar-good'}">${r.difference > 0 ? '+' : ''}${arM(r.difference)}</span>` },
+  { k: 'othersOrders', l: 'Paid by others', t: 'qty', f: r => (r.breakdown && r.breakdown.othersOrders) ? `<span class="ar-warn">${r.breakdown.othersOrders} order(s)</span>` : '—' },
   { k: 'note', l: 'Note' },
 ];
 function arShiftClick(id, idx) {
@@ -306,7 +307,8 @@ function arShiftClick(id, idx) {
     <div class="ar-notrecorded"><span style="flex:1">Counted</span><strong>${arM(r.counted)}</strong></div>
     <div class="ar-notrecorded"><span style="flex:1">Difference</span><strong>${r.difference === null ? 'Shift still open' : arM(r.difference)}</strong></div>
     ${b.mixedPayments ? `<div class="ar-note">${arM(b.mixedPayments)} paid as "Mixed" is not counted as cash.</div>` : ''}
-    <div class="ar-note">${b.orders} order(s) paid in this shift; ${arM(b.otherPayments)} by MoMo/Card/Bank.</div>`,
+    <div class="ar-note">${b.orders} order(s) paid in this shift; ${arM(b.otherPayments)} by MoMo/Card/Bank.</div>
+    ${b.othersOrders ? `<div class="ar-note">${b.othersOrders} of these order(s) were paid by other staff who had no shift of their own (${arM(b.othersCash)} in cash). They are counted in this shift.</div>` : ''}`,
     `${esc(r.openedAt)} → ${esc(r.closedAt || 'still open')} · ${esc(r.device || '')}`);
 }
 

@@ -30,6 +30,7 @@ async function saveExpense(){
       timestamp,
       status: 'pending',
       retryCount: 0,
+      ...(typeof offlineStamp === 'function' ? offlineStamp() : {}),
     });
   } catch(e) {}
 
@@ -42,7 +43,9 @@ async function saveExpense(){
     toast(t('expenseRecorded'));
     loadExpenses();
     await updateSyncBadge();
-  } else if(res.error === 'offline') {
+  } else if(res.error === 'offline' || res.network) {
+    // not reached (or not confirmed): it stays queued; the server ignores it if it had arrived (clientUuid)
+    if (data.paymentMethod === 'Cash' && typeof ooShiftAdd === 'function') await ooShiftAdd('Cash', amount, 'expenses');
     toast(`Expense saved offline — will sync when connected`, 'warning');
     document.getElementById('expDesc').value='';
     document.getElementById('expAmount').value=0;

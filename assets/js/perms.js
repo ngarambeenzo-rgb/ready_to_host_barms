@@ -21,7 +21,7 @@ const PERM_KEYS = ['canViewReports', 'canEditStock', 'canManageItems', 'canViewE
 // Pages not listed here follow the role lists in auth.js.
 const MGR_PAGE_PERMS = {
   'reports': ['canViewReports'], 'charts': ['canViewReports'], 'advanced-reports': ['canViewReports'],
-  'employees': ['canViewEmployees'], 'audit': ['canViewAudit'], 'expenses': ['canRecordExpenses'],
+  'employees': ['canViewEmployees'], 'attendance': ['canViewEmployees'], 'audit': ['canViewAudit'], 'expenses': ['canRecordExpenses'],
   'suppliers': ['canEditStock'], 'stock-count': ['canEditStock'], 'bar-movements': ['canEditStock', 'canViewReports'],
   'bar-items': ['canManageItems', 'canEditStock'], 'bar-ingredients': ['canManageItems', 'canEditStock'],
   'kitchen-ingredients': ['canManageItems', 'canEditStock'], 'kitchen-menu': ['canManageItems'], 'kitchen-recipes': ['canManageItems'],

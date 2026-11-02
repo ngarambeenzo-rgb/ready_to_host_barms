@@ -1,0 +1,48 @@
+<div class="page" id="page-attendance">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Attendance</div>
+      <div class="page-sub">Who started work, when, and for how long. Staff tap "Start work" when they arrive and "End work" when they finish.</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="loadAttendance()">Refresh</button>
+  </div>
+
+  <div class="ar-section">
+    <div class="ar-section-title"><span>Today<div class="ar-section-sub">Who is on duty now, and who should have started but has not.</div></span></div>
+    <div class="att-board">
+      <div>
+        <div class="att-col-title">On duty now <span class="badge badge-green" id="attWorkingCount">0</span></div>
+        <div id="attWorking"></div>
+      </div>
+      <div>
+        <div class="att-col-title">Not started yet <span class="badge badge-orange" id="attNotCount">0</span></div>
+        <div id="attNotStarted"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ar-section">
+    <div class="ar-section-title"><span>History<div class="ar-section-sub">Every start of work in the period, with hours worked and late arrivals.</div></span>
+      <div class="ar-chips" id="attRange"></div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <select class="form-input" id="attPerson" onchange="loadAttendanceHistory()" style="width:220px;max-width:100%"><option value="">Everyone</option></select>
+    </div>
+    <div class="ar-table-wrap"><table class="ar-table">
+      <thead><tr><th>Person</th><th>Role</th><th class="num">Days</th><th class="num">Starts</th><th class="num">Hours worked</th><th class="num">Late</th><th class="num">Never ended</th></tr></thead>
+      <tbody id="attPeople"></tbody>
+    </table></div>
+    <div class="ar-table-wrap" style="margin-top:14px"><table class="ar-table">
+      <thead><tr><th>Date</th><th>Person</th><th>Role</th><th>Started</th><th>Ended</th><th class="num">Hours</th><th>Note</th><th>Device</th></tr></thead>
+      <tbody id="attRows"></tbody>
+    </table></div>
+    <div class="ar-note" id="attNote"></div>
+  </div>
+
+  <div class="ar-section" id="attExpectedSection" style="display:none">
+    <div class="ar-section-title"><span>Expected start times<div class="ar-section-sub">Set the time each person should start. Anyone who starts later is shown as late, and you see who has not started. Leave empty for no check.</div></span></div>
+    <div class="ar-table-wrap"><table class="ar-table">
+      <thead><tr><th>Person</th><th>Role</th><th>Expected start</th><th></th></tr></thead>
+      <tbody id="attExpected"></tbody>
+    </table></div>
+  </div>
+</div>

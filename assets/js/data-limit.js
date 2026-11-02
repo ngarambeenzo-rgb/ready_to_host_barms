@@ -1,14 +1,14 @@
 /* ═══════════════════════════════════════════════════
    BARMS PRO — data-limit.js
-   17-day local data limit system:
-   - Auto-purges data older than 17 days
+   Local data limit system (follows the 14-day license lock):
+   - Reports unsynced items older than the limit
    - Shows offline data notice in reports
    - Tracks storage usage
    - Shows countdown when approaching limit
 ═══════════════════════════════════════════════════ */
 
-const DATA_LIMIT_DAYS   = 17;
-const DATA_WARN_DAYS    = 14; // show warning at 14 days
+const DATA_LIMIT_DAYS   = GRACE_PERIOD_DAYS;      // same as the license lock (license.js)
+const DATA_WARN_DAYS    = GRACE_PERIOD_DAYS - 3;  // show warning 3 days before
 
 // ── PURGE OLD LOCAL DATA ──────────────────────────
 async function purgeOldLocalData() {
@@ -53,7 +53,7 @@ async function checkDataAge() {
 
     const daysSince = Math.floor((Date.now() - lastSync.timestamp) / 86400000);
 
-    if (daysSince >= DATA_LIMIT_DAYS) {
+    if (daysSince > DATA_LIMIT_DAYS) {
       // Data limit reached — trigger lock
       showDataLimitBanner('expired');
     } else if (daysSince >= DATA_WARN_DAYS) {
@@ -86,8 +86,8 @@ function showDataLimitBanner(type, daysLeft = 0) {
   banner.innerHTML = `
     <span style="flex:1">
       No sync for ${DATA_LIMIT_DAYS - daysLeft} days —
-      connect to internet within <strong>${daysLeft} day${daysLeft !== 1 ? 's' : ''}</strong>
-      or app will lock and local data will be lost
+      connect to internet <strong>${daysLeft > 0 ? `within ${daysLeft} day${daysLeft !== 1 ? 's' : ''}` : 'today'}</strong>
+      or the app will lock (sales saved on this device are kept)
     </span>
     <button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">✕</button>
   `;

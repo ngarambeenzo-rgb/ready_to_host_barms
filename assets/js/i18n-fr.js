@@ -505,6 +505,62 @@ const FR_RULES = [
   [/^(.+ · .+)$/, m => { let hit = false; const out = m.split(' · ').map(p => { const t = frText(p); if (t && t !== p) { hit = true; return t; } return p; }); return hit ? out.join(' · ') : m; }],
 ];
 
+// ── work attendance (Start work / End work) ────────
+// added only where the dictionary has no entry yet, so older translations are never changed
+Object.entries({
+  "Attendance": "Présence", "Start work": "Commencer le travail", "End work": "Terminer le travail", "Your work": "Votre travail",
+  "On duty now": "En service maintenant", "On duty": "En service", "Not started yet": "Pas encore commencé", "Never ended": "Jamais terminé",
+  "Work not ended": "Travail non terminé", "Everyone": "Tout le monde", "Hours worked": "Heures travaillées", "Starts": "Débuts", "Person": "Personne",
+  "Started": "Début", "Ended": "Fin", "Hours": "Heures", "Late": "En retard", "Later": "Plus tard", "Clear": "Effacer",
+  "Expected start times": "Heures de début prévues", "Expected start": "Début prévu", "Note (optional)": "Note (facultatif)",
+  "Nobody has started work yet.": "Personne n'a encore commencé à travailler.",
+  "Everyone with an expected start time has started.": "Tous ceux qui ont une heure de début prévue ont commencé.",
+  "Who started work, and when": "Qui a commencé à travailler, et quand",
+  "Nobody started work in this period.": "Personne n'a commencé à travailler sur cette période.",
+  "Nothing to show.": "Rien à afficher.", "No staff yet. Add them in Settings.": "Aucun employé pour l'instant. Ajoutez-les dans Paramètres.",
+  "You have not started work": "Vous n'avez pas commencé le travail",
+  "Tap Start work so the Owner knows when you arrived.": "Touchez « Commencer le travail » pour que le propriétaire sache quand vous êtes arrivé.",
+  "Tell the Owner you have arrived. You stay on duty until you end your work yourself, even if the app signs you out.": "Prévenez le propriétaire que vous êtes arrivé. Vous restez en service jusqu'à ce que vous terminiez vous-même votre travail, même si l'application vous déconnecte.",
+  "Tell the Owner you have started work": "Prévenez le propriétaire que vous avez commencé le travail",
+  "You started work a long time ago and never ended it — tap to fix": "Vous avez commencé il y a longtemps sans terminer — touchez pour corriger",
+  "This work started a long time ago and was never ended. If you end it now, its hours will not be counted. Start work again for today.": "Ce travail a commencé il y a longtemps et n'a jamais été terminé. Si vous le terminez maintenant, ses heures ne seront pas comptées. Recommencez le travail pour aujourd'hui.",
+  "Work started": "Travail commencé", "Work ended": "Travail terminé", "Expected start saved": "Début prévu enregistré", "Expected start removed": "Début prévu supprimé",
+  "Could not start work": "Impossible de commencer le travail", "Could not end work": "Impossible de terminer le travail",
+  "Could not end the work": "Impossible de terminer le travail", "Could not load the attendance": "Impossible de charger la présence", "Could not save": "Enregistrement impossible",
+  "Who is on duty now, and who should have started but has not.": "Qui est en service maintenant, et qui aurait dû commencer sans l'avoir fait.",
+  "Who started work, when, and for how long. Staff tap \"Start work\" when they arrive and \"End work\" when they finish.": "Qui a commencé à travailler, quand et pendant combien de temps. Le personnel touche « Commencer le travail » à son arrivée et « Terminer le travail » à la fin.",
+  "Every start of work in the period, with hours worked and late arrivals.": "Chaque début de travail sur la période, avec les heures travaillées et les retards.",
+  "Set the time each person should start. Anyone who starts later is shown as late, and you see who has not started. Leave empty for no check.": "Réglez l'heure à laquelle chacun doit commencer. Celui qui commence plus tard est marqué en retard, et vous voyez qui n'a pas commencé. Laissez vide pour ne pas contrôler.",
+  "Hours are counted only for work that was ended. Work that was never ended has no hours.": "Les heures ne sont comptées que pour le travail terminé. Un travail jamais terminé n'a pas d'heures.",
+  "Showing the latest 1000 starts. Choose a shorter period to see the rest.": "Affichage des 1000 derniers débuts. Choisissez une période plus courte pour voir le reste.",
+  // selling inside someone else's shift
+  "Paid by others": "Payé par d'autres", "Orders paid by others": "Commandes payées par d'autres",
+  "No shift is open. Open your shift before taking payment: count the cash in the drawer, then you can take money.": "Aucun service n'est ouvert. Ouvrez votre service avant d'encaisser : comptez l'argent du tiroir, puis vous pourrez encaisser.",
+  "No shift is open. Open your shift first (Open shift, top bar): Bartenders cannot take payments when no shift is open.": "Aucun service n'est ouvert. Ouvrez d'abord votre service (Ouvrir un service, barre du haut) : les barmans ne peuvent pas encaisser quand aucun service n'est ouvert.",
+}).forEach(([k, v]) => { if (!(k in FR_DICT)) FR_DICT[k] = v; });
+FR_RULES.unshift(
+  [/^(.+) started work at (\d\d:\d\d)$/, '$1 a commencé à travailler à $2'],
+  [/^(.+) started work at (\d\d:\d\d) — (\d+) min late$/, '$1 a commencé à travailler à $2 — $3 min de retard'],
+  [/^Work started — (\d+) min late$/, 'Travail commencé — $1 min de retard'],
+  [/^Work ended — you worked (.+)$/, 'Travail terminé — vous avez travaillé $1'],
+  [/^On duty — (.+)$/, 'En service — $1'], [/^On duty since (\d\d:\d\d)$/, 'En service depuis $1'],
+  [/^Late by (\d+) min$/, 'En retard de $1 min'], [/^Expected start: (\d\d:\d\d)$/, 'Début prévu : $1'],
+  [/^(Owner|Manager|Bartender|Kitchen) — Since (\d\d:\d\d) — (.+)$/, (m, r, t, d) => `${frText(r) || r} — Depuis ${t} — ${d}`],
+  [/^(Owner|Manager|Bartender|Kitchen) — Expected (\d\d:\d\d)$/, (m, r, t) => `${frText(r) || r} — Prévu ${t}`],
+  [/^You started work at (\d\d:\d\d) — tap to end your work$/, 'Vous avez commencé à $1 — touchez pour terminer votre travail'],
+  [/^End work for (.+) now\?$/, 'Terminer le travail de $1 maintenant ?'],
+  [/^You already started work at (\d\d:\d\d)\. End it first\.$/, 'Vous avez déjà commencé le travail à $1. Terminez-le d\'abord.'],
+  [/^You have not started work$/, 'Vous n\'avez pas commencé le travail'],
+  // selling inside someone else's shift
+  [/^You have no shift of your own\. This payment will be counted in (.+)'s shift \(open since (\d\d:\d\d)\) and marked as paid by you\.$/, "Vous n'avez pas de service à vous. Ce paiement sera compté dans le service de $1 (ouvert depuis $2) et marqué comme encaissé par vous."],
+  [/^Payment counted in (.+)'s shift$/, 'Paiement compté dans le service de $1'],
+  [/^Includes (\d+) order\(s\) paid by other staff who had no shift of their own(?: \((.+) in cash\))?$/, (m, n, c) => `Comprend ${n} commande(s) payée(s) par d'autres employés sans service à eux${c ? ` (${c} en espèces)` : ''}`],
+  [/^(.+) — in (.+)'s shift$/, '$1 — dans le service de $2'],
+  [/^Paid by (.+) in (.+)'s shift$/, 'Encaissé par $1 dans le service de $2'],
+  [/^(\d+) order\(s\)$/, '$1 commande(s)'],
+  [/^(\d+) of these order\(s\) were paid by other staff who had no shift of their own \((.+) in cash\)\. They are counted in this shift\.$/, "$1 de ces commandes ont été payées par d'autres employés sans service à eux ($2 en espèces). Elles sont comptées dans ce service."],
+);
+
 // ── engine ─────────────────────────────────────────
 const _frMap = new Map(Object.entries(FR_DICT).map(([k, v]) => [k.trim().toLowerCase(), v]));
 const _FR_EDGE = /^([\s+✓✕←→•·=\-–—#]*)(.*?)([\s:*…!.]*)$/u;

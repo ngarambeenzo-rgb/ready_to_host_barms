@@ -28,15 +28,24 @@ async function shDeviceChecks() {
   try {
     const q = await dbGetAll('sync_queue');
     const pending = q.filter(i => i.status === 'pending');
-    const stuck = q.filter(i => i.status === 'failed' || (i.status === 'pending' && (i.retryCount || 0) >= 5));
+    const stuck = q.filter(i => !i.rejected && (i.status === 'failed' || (i.status === 'pending' && (i.retryCount || 0) >= 5)));
+    const refused = q.filter(i => i.rejected);
     const conflicts = q.filter(i => i.status === 'conflict');
     const oldest = pending.reduce((m, i) => Math.min(m, i.createdAt || i.timestamp || Date.now()), Date.now());
     const hours = Math.floor((Date.now() - oldest) / 3600000);
-    const st = stuck.length || conflicts.length ? 'fail' : (pending.length && hours >= 6 ? 'warn' : 'ok');
+    const st = stuck.length || conflicts.length || refused.length ? 'fail' : (pending.length && hours >= 6 ? 'warn' : 'ok');
     add('queue', 'Saved offline, waiting to sync', st,
-      !q.length ? 'Nothing waiting' : `${pending.length} waiting${hours ? `, oldest ${hours} h` : ''}${stuck.length ? ` · ${stuck.length} failed 5 times` : ''}${conflicts.length ? ` · ${conflicts.length} conflict(s) to review` : ''} — kept on this device, never deleted`,
+      !q.length ? 'Nothing waiting' : `${pending.length} waiting${hours ? `, oldest ${hours} h` : ''}${stuck.length ? ` · ${stuck.length} failed 5 times` : ''}${refused.length ? ` · ${refused.length} refused by the server (see Offline records)` : ''}${conflicts.length ? ` · ${conflicts.length} conflict(s) to review` : ''} — kept on this device, never deleted`,
       stuck.length ? { action: 'shRetryFailed()', actionLabel: 'Retry failed items' } : {});
   } catch (e) { add('queue', 'Saved offline, waiting to sync', 'fail', 'This browser\'s local storage cannot be read'); }
+  // records made offline (on any device) that the server refused when they synced
+  const rj = await apiGet('misc', 'offline_rejects');
+  if (rj.ok && !rj.offline) {
+    SH.rejects = rj.data || [];
+    out.push({ key: 'offrej', group: 'Offline records', label: 'Refused by the server when they synced', status: SH.rejects.length ? 'fail' : 'ok',
+      detail: SH.rejects.length ? `${SH.rejects.length} record(s) made offline were not saved — check each one and enter it again if it is needed` : 'None',
+      ...(SH.rejects.length ? { action: 'showOfflineRejects()', actionLabel: 'Review' } : {}) });
+  }
   try {
     const last = await dbGet('cache_meta', 'last_ims_sync');
     const h = last && last.timestamp ? Math.floor((Date.now() - last.timestamp) / 3600000) : null;
@@ -128,6 +137,27 @@ async function loadShIncidents() {
   document.getElementById('shIncSummary').textContent = `${+s.total || 0} incident(s) in this period · ${+s.recovered || 0} recovered automatically · ${+s.auto || 0} with an automatic recovery attempt.`;
 }
 
+// Offline records the server refused: what it was, who, when, why
+function showOfflineRejects() {
+  const rows = (SH.rejects || []).map(r => {
+    let what = r.payload || '';
+    try { what = Object.entries(JSON.parse(r.payload)).filter(([k]) => !/uuid/i.test(k)).map(([k, v]) => `${k}: ${v}`).join(', '); } catch (e) {}
+    return `<tr><td>${esc(r.offline_at || '')}</td><td>${esc(r.user_name || '')}</td><td>${esc(r.endpoint)}</td><td>${esc(what)}</td><td>${esc(r.error)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="resolveOfflineReject(${+r.id})">Handled</button></td></tr>`;
+  }).join('');
+  document.getElementById('modalContent').innerHTML = `
+    <h3>Offline records refused by the server</h3>
+    <div class="sh-meta">These were made without internet and refused when they synced, so they are not in the records. Enter again the ones that are needed, then mark them handled.</div>
+    <div class="ar-table-wrap"><table class="ar-table"><thead><tr><th>Made at</th><th>By</th><th>Action</th><th>Details</th><th>Reason</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+async function resolveOfflineReject(id) {
+  const res = await api('misc', 'offline_reject_resolve', { id });
+  if (!res.ok) { toast(res.error || 'Could not save', 'error'); return; }
+  SH.rejects = (SH.rejects || []).filter(r => +r.id !== id);
+  if (SH.rejects.length) showOfflineRejects(); else { closeModal(); loadSystemHealth(); }
+}
+
 async function showShIncident(id) {
   const res = await apiGet('health', 'incident', { id });
   if (!res.ok) { toast(res.error || 'Could not open', 'error'); return; }
@@ -178,7 +208,7 @@ setInterval(shTick, 60 * 1000);
 async function shRetryFailed() {
   if (!navigator.onLine) { toast('Connect to the internet first', 'error'); return; }
   const q = await dbGetAll('sync_queue');
-  const failed = q.filter(i => i.status === 'failed' || (i.status === 'pending' && (i.retryCount || 0) >= 5));
+  const failed = q.filter(i => !i.rejected && (i.status === 'failed' || (i.status === 'pending' && (i.retryCount || 0) >= 5)));
   for (const i of failed) await dbPut('sync_queue', { ...i, status: 'pending', retryCount: 0 });
   await syncPendingItems();
   const left = (await dbGetAll('sync_queue')).filter(i => i.status === 'failed' || (i.retryCount || 0) >= 5).length;

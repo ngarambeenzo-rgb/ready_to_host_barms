@@ -15,6 +15,15 @@
           <!-- ── TODAY: one strip, four figures ── -->
           <section class="db-strip" id="kpiRow1" aria-label="Today"></section>
 
+          <!-- ── STAFF ON DUTY (Owner, and Managers allowed to see employees) ── -->
+          <section class="db-panel" id="dbDutyPanel" style="display:none;margin-bottom:14px">
+            <div class="db-panel-head">
+              <div><div class="db-panel-title">On duty now</div><div class="db-panel-sub">Who started work, and when</div></div>
+              <button class="btn btn-quiet btn-sm" onclick="showPage('attendance')">Attendance<i data-ic="chevright"></i></button>
+            </div>
+            <div id="dbDutyBody"></div>
+          </section>
+
           <!-- ── LIVE: kitchen + attention ── -->
           <div class="db-grid db-grid-live">
             <section class="db-panel" id="dbKitchenPanel">

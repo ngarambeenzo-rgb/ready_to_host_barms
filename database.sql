@@ -18,6 +18,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 CREATE TABLE IF NOT EXISTS `api_tokens` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
+  `device_uuid` varchar(64) DEFAULT NULL,
   `token` varchar(64) NOT NULL,
   `expires_at` datetime NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS `api_tokens` (
   UNIQUE KEY `token` (`token`),
   KEY `user_id` (`user_id`),
   KEY `idx_at_expires` (`expires_at`),
+  KEY `idx_at_user_device` (`user_id`,`device_uuid`),
   CONSTRAINT `api_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE IF NOT EXISTS `audit_log` (
@@ -452,6 +454,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   `read` tinyint(1) NOT NULL DEFAULT 0,
   `type` enum('info','warning','success','error') NOT NULL DEFAULT 'info',
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `for_roles` varchar(40) DEFAULT NULL COMMENT 'when set, only these roles see the notice',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_nt_read` (`is_read`)
@@ -528,8 +531,11 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `voided` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `discount_rules` varchar(255) DEFAULT NULL,
+  `client_uuid` varchar(64) DEFAULT NULL,
+  `offline_ref` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_orders_order_number` (`order_number`),
+  UNIQUE KEY `uq_orders_client_uuid` (`client_uuid`),
   KEY `idx_orders_table_status` (`table_id`,`status`),
   KEY `idx_orders_status_created` (`status`,`created_at`),
   KEY `idx_o_paid` (`status`,`voided`,`paid_at`,`payment_method`,`total`,`discount`),
@@ -614,6 +620,24 @@ CREATE TABLE IF NOT EXISTS `sales` (
   KEY `idx_sync_status` (`sync_status`),
   CONSTRAINT `sales_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS `offline_rejects` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `idem_key` varchar(64) DEFAULT NULL,
+  `device_uuid` varchar(64) NOT NULL DEFAULT '',
+  `user_id` int(11) DEFAULT NULL,
+  `user_name` varchar(100) DEFAULT NULL,
+  `endpoint` varchar(80) NOT NULL,
+  `payload` text DEFAULT NULL,
+  `offline_at` datetime DEFAULT NULL,
+  `error` varchar(255) NOT NULL,
+  `status` varchar(10) NOT NULL DEFAULT 'open',
+  `resolved_by` varchar(100) DEFAULT NULL,
+  `resolved_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_or_key` (`idem_key`),
+  KEY `idx_or_status` (`status`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE IF NOT EXISTS `settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `bar_name` varchar(100) NOT NULL DEFAULT 'BarMS Pro',
@@ -622,6 +646,8 @@ CREATE TABLE IF NOT EXISTS `settings` (
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `stock_count_days` int(11) NOT NULL DEFAULT 7,
   `bartender_can_discount` tinyint(1) NOT NULL DEFAULT 0,
+  `offline_main_device` varchar(64) DEFAULT NULL,
+  `offline_owner_device` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE IF NOT EXISTS `shifts` (
@@ -637,7 +663,9 @@ CREATE TABLE IF NOT EXISTS `shifts` (
   `difference` decimal(12,2) DEFAULT NULL,
   `close_note` varchar(255) DEFAULT NULL,
   `status` varchar(10) NOT NULL DEFAULT 'open',
+  `client_uuid` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_shifts_client_uuid` (`client_uuid`),
   KEY `idx_shifts_user` (`user_id`,`status`),
   KEY `idx_shifts_opened` (`opened_at`),
   KEY `idx_shifts_status` (`status`)
@@ -793,12 +821,34 @@ CREATE TABLE IF NOT EXISTS `tables` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS `attendance` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `user_name` varchar(100) NOT NULL,
+  `role` varchar(20) NOT NULL,
+  `started_at` datetime NOT NULL,
+  `ended_at` datetime DEFAULT NULL,
+  `status` varchar(10) NOT NULL DEFAULT 'open' COMMENT 'open | closed | forgot',
+  `expected_start` time DEFAULT NULL,
+  `late_minutes` int(11) DEFAULT NULL,
+  `device` varchar(120) DEFAULT NULL,
+  `start_note` varchar(255) DEFAULT NULL,
+  `end_note` varchar(255) DEFAULT NULL,
+  `ended_by` varchar(100) DEFAULT NULL,
+  `client_uuid` varchar(64) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_attendance_client_uuid` (`client_uuid`),
+  KEY `idx_attendance_user` (`user_id`,`status`),
+  KEY `idx_attendance_started` (`started_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `full_name` varchar(100) NOT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL COMMENT 'bcrypt hashed',
   `role` enum('Owner','Manager','Bartender','Kitchen') NOT NULL DEFAULT 'Bartender',
+  `expected_start` time DEFAULT NULL COMMENT 'when the Owner expects this person to start work',
   `active` tinyint(1) NOT NULL DEFAULT 1,
   `last_login` datetime DEFAULT NULL,
   `login_attempts` int(11) NOT NULL DEFAULT 0,

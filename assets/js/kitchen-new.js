@@ -478,6 +478,7 @@ async function submitIngredient(id) {
   const costPerUnit = +document.getElementById('kiCost')?.value || 0;
   const minStock    = +document.getElementById('kiMinStock')?.value || 5;
   if (!name || !unit) { toast('Name and unit are required', 'error'); return; }
+  if (quantity > 0 && costPerUnit <= 0) { toast('Enter the cost per unit so stock value and recipe cost are correct', 'error'); return; }
   const res = await api('kitchen2', id ? 'ingredient_update' : 'ingredient_add', { id, name, quantity, unit, costPerUnit, minStock });
   if (!res.ok) { toast(res.error || 'Failed', 'error'); return; }
   toast(id ? 'Updated ' : 'Ingredient added ');

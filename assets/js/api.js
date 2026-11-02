@@ -35,10 +35,16 @@ const API_GET_TIMEOUT_MS = 25000;
 // A read changes nothing, so it is retried once (1.5 s later) when the connection
 // dropped or the server was briefly busy (502/503/504).
 async function apiGet(resource, action, params = {}) {
-  const first = await apiGetOnce(resource, action, params);
-  if (first.ok || !(first.network || [502, 503, 504].includes(first.status)) || first.timeout || navigator.onLine === false) return first;
-  await new Promise(r => setTimeout(r, 1500));
-  return apiGetOnce(resource, action, params);
+  let res = await apiGetOnce(resource, action, params);
+  if (!res.ok && (res.network || [502, 503, 504].includes(res.status)) && !res.timeout && navigator.onLine !== false) {
+    await new Promise(r => setTimeout(r, 1500));
+    res = await apiGetOnce(resource, action, params);
+  }
+  if (typeof offlineCachePut !== 'function') return res;
+  // offline device: keep the last answer, and show it when the server cannot be reached
+  if (res.ok) offlineCachePut(resource, action, params, res);
+  else if (res.network) return (await offlineCacheGet(resource, action, params)) || res;
+  return res;
 }
 async function apiGetOnce(resource, action, params = {}) {
   const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
@@ -51,6 +57,7 @@ async function apiGetOnce(resource, action, params = {}) {
       headers: getUserActivityHeaders(),
       signal: ctrl ? ctrl.signal : undefined,
     });
+    if (typeof offlineClockFrom === 'function') offlineClockFrom(res);
     const data = await apiReadJson(res);
     if (data && typeof data === 'object' && !data.ok && res.status >= 500) data.status = res.status;
     return data;
@@ -104,6 +111,7 @@ async function api(resource, action, payload = {}, _retried = false, _key = null
         body: JSON.stringify(payload),
       });
       reached = true;
+      if (typeof offlineClockFrom === 'function') offlineClockFrom(res);
       if ([502, 503, 504].includes(res.status) && attempt < API_RETRY_DELAYS_MS.length) { await apiSleep(API_RETRY_DELAYS_MS[attempt]); continue; }
       const data = await apiReadJson(res);
       if (res.status === 409 && data && data.inProgress && attempt < API_RETRY_DELAYS_MS.length) { await apiSleep(API_RETRY_DELAYS_MS[attempt]); continue; }

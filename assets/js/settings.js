@@ -61,6 +61,7 @@ function applySettingsPanelAccess(){
     userMgmtPanel:can('canManageUsers'),
     mgrPermPanel:session.role==='Owner',
     stockCountPanel:session.role==='Owner',
+    offlinePanel:session.role==='Owner',
     discountPanel:session.role==='Owner',
     backupPanel:session.role==='Owner',
   };
@@ -247,6 +248,7 @@ async function loadSettingsPageData() {
   }
   if (role === 'Owner') {
     await loadImsSettings();
+    await loadOfflineDevices();
     if (typeof renderStorageInfo === 'function') {
       await renderStorageInfo('storageInfoPanel');
     }
@@ -368,4 +370,46 @@ async function saveDiscountPolicy(on){
   const res=await api('discounts','policy',{bartenderCanDiscount:on?1:0});
   if(!res.ok){toast(res.error||'Could not save','error');return;}
   toast(on?'Bartenders can now apply your discounts':'Bartenders can no longer apply discounts','success');
+}
+// ── OFFLINE DEVICES (Owner) ───────────────────────
+// A short readable name for a device from its browser description
+function offlineDeviceLabel(d){
+  const ua=d.name||'';
+  const os=/Android/.test(ua)?'Android':/iPhone|iPad/.test(ua)?'iPhone/iPad':/Windows/.test(ua)?'Windows PC':/Mac OS/.test(ua)?'Mac':/Linux/.test(ua)?'Linux':(d.type||'Device');
+  const br=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'';
+  const seen=d.lastSync?' — last seen '+String(d.lastSync).slice(0,16):'';
+  return `${os}${br?' · '+br:''} · ${String(d.uuid).slice(0,8)}${seen}`;
+}
+
+async function loadOfflineDevices(){
+  const main=document.getElementById('offMain'),owner=document.getElementById('offOwner');
+  if(!main||!owner)return;
+  const res=await apiGet('misc','offline_devices');
+  if(!res.ok){document.getElementById('offThisDevice').textContent=res.error||'Could not load the devices';return;}
+  const opts=res.devices.map(d=>`<option value="${esc(d.uuid)}">${esc(offlineDeviceLabel(d))}${d.uuid===res.thisDevice?' (this device)':''}</option>`).join('');
+  main.innerHTML='<option value="">— none —</option>'+opts;
+  owner.innerHTML='<option value="">— none —</option>'+opts;
+  main.value=res.main||'';owner.value=res.owner||'';
+  const role=res.thisDevice&&res.thisDevice===res.main?'the main device':res.thisDevice&&res.thisDevice===res.owner?"the Owner's device":'not an offline device';
+  document.getElementById('offThisDevice').textContent=`This device (${String(res.thisDevice||'').slice(0,8)}) is ${role}.`;
+}
+
+async function saveOfflineDevices(){
+  const main=document.getElementById('offMain').value,owner=document.getElementById('offOwner').value;
+  if(main&&main===owner){toast('Choose two different devices','error');return;}
+  const res=await api('misc','offline_devices_save',{main,owner});
+  if(!res.ok){toast(res.error||'Could not save','error');return;}
+  toast('Offline devices saved. Staff sign in online once on these devices to be able to work offline there.');
+  // this device's own role changed? refresh it (and this person's offline sign-in)
+  if(typeof offlineSetRole==='function'){
+    const tok=await api('auth','token',{});   // a new token replaces this person's old one
+    if(!('offlineRole' in tok)){toast('Saved, but this device could not refresh its offline sign-in. Sign out and in again.','warning');loadOfflineDevices();return;}
+    await offlineSetRole(tok.offlineRole);    // no role → forgets offline sign-ins here
+    const key='offline_user:'+session.username;
+    const me=await dbGet('auth',key);
+    if(tok.ok&&me)await dbPut('auth',{...me,token:tok.token});
+    else if(tok.ok)toast('Sign out and in again on this device to be able to sign in here offline.','warning');
+    else if(me)await dbDelete('auth',key);
+  }
+  loadOfflineDevices();
 }

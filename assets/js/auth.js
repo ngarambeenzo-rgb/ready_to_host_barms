@@ -26,11 +26,11 @@ const ROLE_PAGES={
   Owner:    ['dashboard','order-creation','order-management','payment-invoice','bar-sales','tables',
              'bar-items','bar-ingredients','bar-movements',
              'kitchen-dashboard','kitchen-menu','kitchen-recipes','kitchen-ingredients','kitchen-queue','expenses','advanced-reports','reports','charts','employees',
-             'custdebts','voidreqs','audit','settings','suppliers','stock-count','cashbook','assets','system-health','support'],
+             'custdebts','voidreqs','audit','settings','suppliers','stock-count','cashbook','assets','system-health','support','attendance'],
   Manager:  ['dashboard','order-creation','order-management','payment-invoice','bar-sales','tables',
              'bar-items','bar-ingredients','bar-movements',
              'kitchen-dashboard','kitchen-menu','kitchen-recipes','kitchen-ingredients','kitchen-queue','expenses','advanced-reports','reports','charts','employees',
-             'custdebts','voidreqs','audit','settings','suppliers','stock-count'],
+             'custdebts','voidreqs','audit','settings','suppliers','stock-count','attendance'],
   Bartender:['dashboard','order-creation','order-management','payment-invoice','bar-sales'],
   Kitchen:  ['kitchen-queue','kitchen-dashboard','kitchen-menu','kitchen-ingredients','stock-count'],
 };
@@ -38,11 +38,11 @@ const ROLE_NAV={
   Owner:    ['nav-dashboard','nav-order-creation','nav-order-management','nav-payment-invoice','nav-bar-sales',
              'nav-bar-items','nav-bar-ingredients','nav-bar-movements',
              'nav-kitchen-dashboard','nav-kitchen-menu','nav-kitchen-recipes','nav-kitchen-ingredients','nav-kitchen-queue','nav-expenses','nav-advanced-reports',
-             'nav-reports','nav-charts','nav-employees','nav-custdebts','nav-voidreqs','nav-audit','nav-settings','nav-suppliers','nav-stock-count','nav-cashbook','nav-assets','nav-system-health','nav-support'],
+             'nav-reports','nav-charts','nav-employees','nav-custdebts','nav-voidreqs','nav-audit','nav-settings','nav-suppliers','nav-stock-count','nav-cashbook','nav-assets','nav-system-health','nav-support','nav-attendance'],
   Manager:  ['nav-dashboard','nav-order-creation','nav-order-management','nav-payment-invoice','nav-bar-sales',
              'nav-bar-items','nav-bar-ingredients','nav-bar-movements',
              'nav-kitchen-dashboard','nav-kitchen-menu','nav-kitchen-recipes','nav-kitchen-ingredients','nav-kitchen-queue','nav-expenses','nav-advanced-reports',
-             'nav-reports','nav-charts','nav-employees','nav-custdebts','nav-voidreqs','nav-audit','nav-settings','nav-suppliers','nav-stock-count'],
+             'nav-reports','nav-charts','nav-employees','nav-custdebts','nav-voidreqs','nav-audit','nav-settings','nav-suppliers','nav-stock-count','nav-attendance'],
   Bartender:['nav-dashboard','nav-order-creation','nav-order-management','nav-payment-invoice','nav-bar-sales'],
   Kitchen:  ['nav-kitchen-queue','nav-kitchen-dashboard','nav-kitchen-menu','nav-kitchen-ingredients','nav-stock-count'],
 };
@@ -76,7 +76,7 @@ async function canAccessPage(pageId){
     const extras={
       reports:perms.canViewReports,charts:perms.canViewReports,'advanced-reports':perms.canViewReports,suppliers:perms.canEditStock,
       stock:perms.canEditStock,products:perms.canManageItems,
-      employees:perms.canViewEmployees,audit:perms.canViewAudit,
+      employees:perms.canViewEmployees,attendance:perms.canViewEmployees,audit:perms.canViewAudit,
       expenses:perms.canRecordExpenses,
     };
     if(pageId in extras)return extras[pageId];
@@ -88,7 +88,7 @@ async function canAccessPage(pageId){
 async function applyRoleAccess(){
   const allNav=['nav-dashboard','nav-order-creation','nav-order-management','nav-payment-invoice','nav-bar-sales',
                 'nav-bar-items','nav-bar-ingredients','nav-bar-movements','nav-kitchen-dashboard','nav-kitchen-menu','nav-kitchen-recipes','nav-kitchen-ingredients','nav-kitchen-queue','nav-expenses','nav-advanced-reports','nav-reports','nav-charts',
-                'nav-employees','nav-custdebts','nav-voidreqs','nav-audit','nav-settings','nav-suppliers','nav-stock-count','nav-cashbook','nav-assets','nav-system-health','nav-support'];
+                'nav-employees','nav-custdebts','nav-voidreqs','nav-audit','nav-settings','nav-suppliers','nav-stock-count','nav-cashbook','nav-assets','nav-system-health','nav-support','nav-attendance'];
   const allowed=ROLE_NAV[session.role]||[];
   allNav.forEach(id=>{
     const el=document.getElementById(id);
@@ -110,7 +110,7 @@ async function applyRoleAccess(){
     if(!perms.canViewReports){['nav-reports','nav-charts','nav-advanced-reports'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
     if(!perms.canEditStock){['nav-stock','nav-suppliers'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
     if(!perms.canManageItems){const el=document.getElementById('nav-products');if(el)el.style.display='none';}
-    if(!perms.canViewEmployees){const el=document.getElementById('nav-employees');if(el)el.style.display='none';}
+    if(!perms.canViewEmployees){['nav-employees','nav-attendance'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
     if(!perms.canViewAudit){const el=document.getElementById('nav-audit');if(el)el.style.display='none';}
     if(!perms.canRecordExpenses){const el=document.getElementById('nav-expenses');if(el)el.style.display='none';}
   }
@@ -129,9 +129,23 @@ async function doLogin(){
   const u=document.getElementById('loginUser').value.trim().toLowerCase();
   const p=document.getElementById('loginPass').value;
   const errEl=document.getElementById('loginErr');
+  const errMsg=document.getElementById('loginErrMsg');
+  if(errMsg){errMsg.dataset.std=errMsg.dataset.std||errMsg.textContent;errMsg.textContent=errMsg.dataset.std;}
   errEl.style.display='none';
   if(!u||!p){errEl.style.display='block';return;}
   const res=await api('auth','login',{username:u,password:p});
+  // no internet (or server unreachable): an offline device can sign in on its own
+  if(!res.ok&&(res.network||res.error==='offline')&&typeof offlineSignIn==='function'){
+    const off=await offlineSignIn(u,p);
+    if(!off.ok){clearLoginFields(true);if(errMsg)errMsg.textContent=off.error;errEl.style.display='block';document.getElementById('loginPass')?.focus();return;}
+    clearLoginFields();
+    session={userId:off.user.id,username:off.user.username,role:off.user.role,fullName:off.user.fullName,offline:true};
+    window.__barmsLastUserActivity=Date.now();
+    startIdleSessionMonitor();
+    enterApp(off.user,{});
+    toast('No internet — signed in on this device. Your work is saved here and sent when the internet is back.','warning');
+    return;
+  }
   if(!res.ok){clearLoginFields(true);errEl.style.display='block';document.getElementById('loginPass')?.focus();return;}
   // Clear the password before the login box is hidden so the browser has nothing to offer to save
   clearLoginFields();
@@ -145,14 +159,18 @@ async function doLogin(){
     await dbPut('auth', { key: 'session', ...user });
   } catch(e) {}
 
-  // Task 66: Get JWT token and save to IndexedDB
+  // Offline device (Settings → Offline devices): this person's token for sending offline
+  // records, and their offline sign-in. Elsewhere this forgets them.
   try {
-    const tokenRes = await api('auth','token',{});  // session already set, no need to re-send credentials
-    if (tokenRes.ok) {
-      await dbPut('auth', { key: 'jwt_token', token: tokenRes.token, expiresAt: tokenRes.expiresAt });
-    }
-  } catch(e) { console.warn('[Auth] Could not get JWT token:', e); }
+    const tokenRes = await api('auth','token',{});
+    if (typeof offlineAfterLogin === 'function') await offlineAfterLogin(user, p, tokenRes);
+  } catch(e) { console.warn('[Auth] Could not set up offline use:', e); }
 
+  enterApp(user,res);
+}
+
+// Show the app for a signed-in user (online, or offline on an offline device)
+function enterApp(user,res){
   document.getElementById('loginWrap').style.display='none';
   document.getElementById('appShell').style.display='flex';
   document.getElementById('sidebarName').textContent=user.fullName;
@@ -163,6 +181,16 @@ async function doLogin(){
   const bdBtn = document.getElementById('backdateBtn'); if (bdBtn) bdBtn.style.display = '';
   applyLanguage();
   showPage(session.role==='Kitchen'?'kitchen-queue':'dashboard');
+  // Online on an offline device: unfinished orders made offline move to the server, and the
+  // copies needed without internet are refreshed
+  if(!session.offline){
+    if(typeof ooMoveUnfinished==='function')ooMoveUnfinished().then(()=>typeof syncPendingItems==='function'&&syncPendingItems());
+    if(typeof offlinePreload==='function')setTimeout(offlinePreload,4000);
+  }
+  // Send sales saved offline now — they could not sync while nobody was signed in
+  if(typeof syncPendingItems==='function')syncPendingItems();
+  if(session.offline)return;   // the checks below need the server
+  if(typeof initBackdateMode==='function')initBackdateMode();
   setTimeout(()=>{
     if(res.pendingVoids>0&&session.role!=='Bartender'&&session.role!=='Kitchen'){
       showPopupNotif(currentLang==='fr'?`Vous avez ${res.pendingVoids} demande${res.pendingVoids>1?'s':''} d'annulation en attente`:`You have ${res.pendingVoids} pending void request${res.pendingVoids>1?'s':''} awaiting your review`,'warning','');

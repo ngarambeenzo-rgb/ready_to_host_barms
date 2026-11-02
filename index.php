@@ -32,6 +32,7 @@ require_once __DIR__ . '/config/db.php';
   <link rel="stylesheet" href="assets/css/dashboard.css?v=3" />
   <link rel="stylesheet" href="assets/css/reports.css?v=2" />
   <link rel="stylesheet" href="assets/css/advanced-reports.css?v=6" />
+  <link rel="stylesheet" href="assets/css/attendance.css?v=1" />
   <link rel="stylesheet" href="assets/css/kitchen-queue.css?v=3" />
   <link rel="stylesheet" href="assets/css/responsive.css?v=4" />
   <link rel="stylesheet" href="assets/css/ui.css?v=27" />
@@ -138,6 +139,7 @@ require_once __DIR__ . '/config/db.php';
         <div class="sb-section">
           <div class="sb-label">People & admin</div>
           <div class="nav-item" id="nav-employees" onclick="showPage('employees')" title="Employees"><span class="nav-icon" data-ic="users"></span><span class="nav-label">Employees</span></div>
+          <div class="nav-item" id="nav-attendance" onclick="showPage('attendance')" title="Attendance"><span class="nav-icon" data-ic="clock"></span><span class="nav-label">Attendance</span></div>
           <div class="nav-item" id="nav-audit" onclick="showPage('audit')" title="Audit Log"><span class="nav-icon" data-ic="history"></span><span class="nav-label">Audit Log</span></div>
           <div class="nav-item" id="nav-system-health" onclick="showPage('system-health')" title="System Health"><span class="nav-icon" data-ic="checkcircle"></span><span class="nav-label">System Health</span></div>
           <div class="nav-item" id="nav-settings" onclick="showPage('settings')" title="Settings"><span class="nav-icon" data-ic="settings"></span><span class="nav-label">Settings</span></div>
@@ -172,6 +174,7 @@ require_once __DIR__ . '/config/db.php';
         </div>
         <div class="topbar-right" style="position:relative">
           <button class="tb-btn" onclick="showSearch()" title="Search (/)" aria-label="Search"><i data-ic="search"></i></button>
+          <button class="tb-btn" onclick="showWorkModal()" id="workBtn" style="display:none">Start work</button>
           <button class="tb-btn" onclick="showShiftModal()" id="shiftBtn" style="display:none">Shift</button>
           <!-- Task 73: Sync status badge -->
           <span id="syncBadge" style="display:none;font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;color:#fff;cursor:pointer" onclick="updateSyncBadge()"></span>
@@ -233,6 +236,7 @@ require_once __DIR__ . '/config/db.php';
         <?php include 'pages/system-health.html'; ?>
         <?php include 'pages/charts.html'; ?>
         <?php include 'pages/employees.html'; ?>
+        <?php include 'pages/attendance.html'; ?>
         <?php include 'pages/settings.html'; ?>
         <?php include 'pages/support.html'; ?>
         <?php include 'pages/custdebts.html'; ?>
@@ -273,39 +277,42 @@ require_once __DIR__ . '/config/db.php';
   </div>
 
   <!-- JS — load order matters: db-local first, then utils, api, auth, navigation, then page modules -->
-  <script src="assets/js/db-local.js?v=2"></script>
-  <script src="assets/js/license.js?v=2.7"></script>
-  <script src="assets/js/tenant.js?v=1"></script>
-  <script src="assets/js/data-limit.js?v=2.3"></script>
+  <script src="assets/js/db-local.js?v=4"></script>
+  <script src="assets/js/license.js?v=3.0"></script>
+  <script src="assets/js/tenant.js?v=3"></script>
+  <script src="assets/js/data-limit.js?v=2.5"></script>
   <script src="assets/js/utils.js?v=7"></script>
   <script src="assets/js/bx-charts.js?v=8"></script>
-  <script src="assets/js/api.js?v=8"></script>
+  <script src="assets/js/api.js?v=9"></script>
+  <script src="assets/js/offline.js?v=6"></script>
   <script src="assets/js/health.js?v=3"></script>
-  <script src="assets/js/system-health.js?v=4"></script>
-  <script src="assets/js/perf.js?v=2"></script>
-  <script src="assets/js/auth.js?v=14"></script>
-  <script src="assets/js/navigation.js?v=10"></script>
+  <script src="assets/js/system-health.js?v=5"></script>
+  <script src="assets/js/perf.js?v=3"></script>
+  <script src="assets/js/offline-orders.js?v=9"></script>
+  <script src="assets/js/auth.js?v=20"></script>
+  <script src="assets/js/navigation.js?v=12"></script>
   <script src="assets/js/ui.js?v=13"></script>
   <script src="assets/js/ui-art.js?v=3"></script>
-  <script src="assets/js/perms.js?v=2"></script>
-  <script src="assets/js/i18n-fr.js?v=6"></script>
-  <script src="assets/js/dashboard.js?v=10"></script>
-  <script src="assets/js/kitchen-new.js?v=9"></script>
+  <script src="assets/js/perms.js?v=3"></script>
+  <script src="assets/js/i18n-fr.js?v=8"></script>
+  <script src="assets/js/dashboard.js?v=11"></script>
+  <script src="assets/js/kitchen-new.js?v=10"></script>
   <script src="assets/js/recipe-costing.js?v=2"></script>
-  <script src="assets/js/kitchen-queue.js?v=4"></script>
+  <script src="assets/js/kitchen-queue.js?v=5"></script>
   <script src="assets/js/reports.js?v=8"></script>
-  <script src="assets/js/advanced-reports.js?v=17"></script>
-  <script src="assets/js/ar-export.js?v=11"></script>
+  <script src="assets/js/advanced-reports.js?v=18"></script>
+  <script src="assets/js/ar-export.js?v=12"></script>
   <script src="assets/js/suppliers.js?v=3"></script>
   <script src="assets/js/stock-ops.js?v=7"></script>
-  <script src="assets/js/shifts.js?v=4"></script>
+  <script src="assets/js/shifts.js?v=5"></script>
+  <script src="assets/js/attendance.js?v=2"></script>
   <script src="assets/js/charts.js?v=3"></script>
   <script src="assets/js/employees.js?v=6"></script>
   <script src="assets/js/misc.js?v=8"></script>
-  <script src="assets/js/settings.js?v=9"></script>
+  <script src="assets/js/settings.js?v=11"></script>
   <script src="assets/js/support.js?v=3"></script>
   <script src="assets/js/offline-ui.js?v=2"></script>
-  <script src="assets/js/sync.js?v=2.5"></script>
+  <script src="assets/js/sync.js?v=3.2"></script>
 <script src="assets/js/bar-inventory.js?v=11"></script>
 <script src="assets/js/bar-sales.js?v=94"></script>
   <!-- PWA: Install banner (Android/Desktop) -->
@@ -337,7 +344,7 @@ require_once __DIR__ . '/config/db.php';
 
   <!-- Task 24 & 52: Service worker registration + pwa.js -->
   <script src="assets/js/pwa.js?v=4"></script>
-<script src="assets/js/backdate.js?v=3"></script>
+<script src="assets/js/backdate.js?v=4"></script>
   <script>
     // ── INIT ──────────────────────────────────────────────────
     document.addEventListener('click', closeNotifOutside);
@@ -377,12 +384,12 @@ document.addEventListener('click', function(e) {
 });
 </script>
 <script src="assets/js/order-creation.js?v=3"></script>
-<script src="assets/js/order-management.js?v=11"></script>
-<script src="assets/js/refunds.js?v=5"></script>
-<script src="assets/js/payment-invoice.js?v=12"></script>
+<script src="assets/js/order-management.js?v=12"></script>
+<script src="assets/js/refunds.js?v=6"></script>
+<script src="assets/js/payment-invoice.js?v=14"></script>
 <script src="assets/js/tables.js?v=7"></script>
-    <script src="assets/js/sales.js?v=4"></script>
-    <script src="assets/js/expenses.js?v=6"></script>
+    <script src="assets/js/sales.js?v=5"></script>
+    <script src="assets/js/expenses.js?v=8"></script>
     <script src="assets/js/products.js?v=3"></script>
     <script src="assets/js/stock.js?v=3"></script></body>
 </html>

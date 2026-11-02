@@ -178,52 +178,36 @@ if ($action === 'change_password') {
 }
 
 
-// ── GENERATE API TOKEN (Task 14) ──────────────────────────────
-// Called after login to get a long-lived token for service worker use
+// ── OFFLINE TOKEN ─────────────────────────────────────────────
+// Called right after an online sign-in. On one of the two offline devices (Settings →
+// Offline devices) the signed-in person gets a token for THIS device, used later to send
+// the records they make offline (see offlineTokenUser in config/db.php). One token per
+// person per device: signing in on another device does not cancel this one.
 if ($action === 'token') {
-    if (empty($_SESSION['user_id'])) {
-        // Also allow token generation via credentials (for first login)
-        $body     = json_decode(file_get_contents('php://input'), true);
-        $username = strtolower(trim($body['username'] ?? ''));
-        $password = $body['password'] ?? '';
+    requireCsrf();
+    $sess   = requireAuth();
+    $db     = getDB();
+    $userId = (int)$sess['user_id'];
+    $device = trim($_SERVER['HTTP_X_BARMS_DEVICE'] ?? '');
+    $role   = offlineDeviceRole($db, $device);
 
-        if (!$username || !$password) {
-            jsonOut(['ok' => false, 'error' => 'Not authenticated'], 401);
-        }
-
-        $db   = getDB();
-        $stmt = $db->prepare('SELECT * FROM users WHERE username = ? AND active = 1 LIMIT 1');
-        $stmt->execute([$username]);
-        $user = $stmt->fetch();
-
-        $valid = false;
-        if ($user) {
-            if (strlen($user['password']) === 32 && $user['password'] === md5($password)) $valid = true;
-            elseif (password_verify($password, $user['password'])) $valid = true;
-        }
-        if (!$valid) jsonOut(['ok' => false, 'error' => 'Invalid credentials'], 401);
-        $userId = $user['id'];
-    } else {
-        requireAuth();
-        $userId = $_SESSION['user_id'];
-        $db = getDB();
+    if (!offlineRoleAllows($role, (string)$sess['role'])) {
+        // not allowed offline here (any more): no new token. An old one is kept until it
+        // expires, so records already made offline on this device can still be sent.
+        jsonOut(['ok' => false, 'offlineRole' => $role, 'error' => 'not_offline_device']);
     }
 
-    // Generate secure random token
     $rawToken  = bin2hex(random_bytes(32)); // 64-char hex string
-    $tokenHash = hash('sha256', $rawToken);
-    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
-
-    // Delete any existing tokens for this user before inserting new one
-    $db->prepare('DELETE FROM api_tokens WHERE user_id = ?')->execute([$userId]);
-
-    $db->prepare('INSERT INTO api_tokens (user_id, token, expires_at) VALUES (?, ?, ?)')
-       ->execute([$userId, $tokenHash, $expiresAt]);
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+' . OFFLINE_TOKEN_DAYS . ' days'));   // for the device only; the server uses its own clock
+    $db->prepare('DELETE FROM api_tokens WHERE user_id = ? AND device_uuid = ?')->execute([$userId, $device]);
+    $db->prepare('INSERT INTO api_tokens (user_id, device_uuid, token, expires_at) VALUES (?, ?, ?, NOW() + INTERVAL ' . OFFLINE_TOKEN_DAYS . ' DAY)')
+       ->execute([$userId, $device, hash('sha256', $rawToken)]);
 
     jsonOut([
-        'ok'        => true,
-        'token'     => $rawToken,
-        'expiresAt' => $expiresAt,
+        'ok'          => true,
+        'token'       => $rawToken,
+        'expiresAt'   => $expiresAt,
+        'offlineRole' => $role,
     ]);
 }
 

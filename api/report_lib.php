@@ -354,6 +354,9 @@ function rpShiftCash(PDO $db, array $shift): array {
         'mixedPayments'   => $sum("SELECT COALESCE(SUM(total - discount),0) FROM orders WHERE shift_id = ? AND status = 'paid' AND voided = 0 AND payment_method = 'Mixed'"),
         'otherPayments'   => $sum("SELECT COALESCE(SUM(total - discount),0) FROM orders WHERE shift_id = ? AND status = 'paid' AND voided = 0 AND payment_method NOT IN ('Cash','Mixed')"),
         'orders'          => (int)rpVal($db, "SELECT COUNT(*) FROM orders WHERE shift_id = ? AND status = 'paid' AND voided = 0", [$id]),
+        // paid by someone else while this shift was open (they had no shift of their own): already inside the figures above
+        'othersOrders'    => (int)rpVal($db, "SELECT COUNT(*) FROM orders WHERE shift_id = ? AND status = 'paid' AND voided = 0 AND paid_by <> ?", [$id, (string)($shift['user_name'] ?? '')]),
+        'othersCash'      => (float)rpVal($db, "SELECT COALESCE(SUM(total - discount),0) FROM orders WHERE shift_id = ? AND status = 'paid' AND voided = 0 AND payment_method = 'Cash' AND paid_by <> ?", [$id, (string)($shift['user_name'] ?? '')]),
     ];
     $expected = $b['openingFloat'] + $b['cashSales'] + $b['debtCollections'] + $b['cashIn']
               - $b['refunds'] - $b['expenses'] - $b['supplierPayments'] - $b['cashOut'];

@@ -198,7 +198,7 @@ function _dbStopKitchenOverviewPolling() {
 
 async function _dbRenderKitchenOverview() {
   const page = document.getElementById('page-dashboard');
-  if (!page || !page.classList.contains('active')) { _dbStopKitchenOverviewPolling(); return; }
+  if (!page || !page.classList.contains('active') || document.getElementById('appShell')?.style.display === 'none') { _dbStopKitchenOverviewPolling(); return; }
   const box = document.getElementById('dbKitchenOverview');
   if (!box) return;
 
@@ -275,7 +275,7 @@ function buildMonthlyChart(monthlySales) {
 
 // ── FRAUD CHECK ───────────────────────────────────
 async function runFraudCheck() {
-  if (session.role === 'Bartender') return;
+  if (!session.userId || session.role === 'Bartender' || session.role === 'Kitchen') return;
   const res = await apiGet('misc', 'dashboard', {});
   if (!res.ok) return;
   const d = res.data;
@@ -283,4 +283,4 @@ async function runFraudCheck() {
     showPopupNotif(currentLang === 'fr' ? `${d.pendingVoids} demande${d.pendingVoids > 1 ? 's' : ''} d'annulation en attente` : `${d.pendingVoids} void request${d.pendingVoids > 1 ? 's' : ''} pending review`, 'warning', '');
   }
 }
-function runPeriodicFraudCheck() { if (session.role !== 'Bartender') runFraudCheck(); }
+function runPeriodicFraudCheck() { if (session.userId && document.getElementById('appShell')?.style.display !== 'none') runFraudCheck(); }

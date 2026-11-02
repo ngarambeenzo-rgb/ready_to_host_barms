@@ -8,6 +8,7 @@ define('DB_HOST', 'sqlXXX.infinityfree.com');
 define('DB_USER', 'if0_XXXXXXXX');
 define('DB_PASS', 'your-database-password');
 define('DB_NAME', 'if0_XXXXXXXX_db_barms');
+define('BARMS_IMS_DB', 'if0_XXXXXXXX_db_ims');   // the IMS database (same server, same user); leave out if IMS shares DB_NAME
 // IMS client id that owns the data already on the hosting (set before the first sign-in after this update)
 // define('BARMS_LEGACY_CLIENT', 0);
 // Secret key for running migrations from the browser (tools/migrate_all_clients.php?file=…&key=…)

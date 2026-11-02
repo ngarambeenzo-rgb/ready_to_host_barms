@@ -49,10 +49,20 @@ function _kqBusy(id, on) {
 }
 
 // ── ENTRY POINT (called by navigation.js) ──────────
+let _kqRendering = false, _kqAgain = false, _kqListening = false;
+const KQ_POLL_MS = 5000;     // a new order shows within 5 s
+const KQ_STOCK_TTL = 45000;  // stock badge is re-checked at most this often
+
 function loadKitchenQueue(){
   renderKitchenQueue();
   if(_kqPollInterval) clearInterval(_kqPollInterval);
-  _kqPollInterval = setInterval(renderKitchenQueue, 8000);
+  _kqPollInterval = setInterval(() => { if (!document.hidden) renderKitchenQueue(); }, KQ_POLL_MS);
+  if (!_kqListening) {
+    _kqListening = true;
+    // Back on the tab / connection back: show the true state at once instead of waiting for the next tick
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) renderKitchenQueue(); });
+    window.addEventListener('online', () => renderKitchenQueue());
+  }
 }
 
 function stopKitchenQueuePolling(){
@@ -64,8 +74,21 @@ async function renderKitchenQueue(){
   const page = document.getElementById('page-kitchen-queue');
   if(!page || !page.classList.contains('active')){ stopKitchenQueuePolling(); return; }
 
-  const res = await apiGet('kitchen_orders','queue');
+  // One refresh at a time: a slow answer must not be overwritten by an older one
+  if (_kqRendering) { _kqAgain = true; return; }
+  _kqRendering = true;
+  try { await _kqRender(); }
+  finally {
+    _kqRendering = false;
+    if (_kqAgain) { _kqAgain = false; renderKitchenQueue(); }
+  }
+}
+
+async function _kqRender(){
+  const [res, readyRes] = await Promise.all([apiGet('kitchen_orders','queue'), apiGet('kitchen_orders','ready_list')]);
   if(!res.ok) return;
+  const page = document.getElementById('page-kitchen-queue');
+  if(!page || !page.classList.contains('active')) return;
   const orders = res.data || [];
 
   // Detect NEW pending orders for popup notification
@@ -83,7 +106,6 @@ async function renderKitchenQueue(){
 
   const pending   = orders.filter(o=>o.status==='pending');
   const preparing = orders.filter(o=>o.status==='accepted'||o.status==='preparing');
-  const readyRes  = await apiGet('kitchen_orders','ready_list');
   const ready     = readyRes.ok ? (readyRes.data||[]) : [];
 
   const isFirst = !_kqRendered;
@@ -112,8 +134,14 @@ async function renderKitchenQueue(){
     kqColReady:     ready.length     ? ready.map(o=>renderReadyTicket(o)).join('')          : uiEmpty('checkcircle','Nothing waiting','Ready orders wait here for pickup.'),
   }, isFirst);
   _kqRendered = true;
-  // Fetch stock status for pending orders (for badge)
-  pending.forEach(o=>checkAndRenderStock(o.id));
+  // Stock badge: show the saved answer at once, ask again only when it is old
+  const liveIds = new Set(pending.map(o => o.id));
+  Object.keys(_kqStockCache).forEach(k => { if (!liveIds.has(+k)) delete _kqStockCache[k]; });
+  pending.forEach(o => {
+    const c = _kqStockCache[o.id];
+    if (c) _kqPaintStock(o.id, c.status);
+    if (!c || Date.now() - c.at > KQ_STOCK_TTL) checkAndRenderStock(o.id);
+  });
 }
 
 function timerClass(remaining,isDelayed){
@@ -153,8 +181,8 @@ function renderTicket(o,stage){
       <div class="kq-items">${itemsHtml}</div>
       ${o.customer_note?`<div class="kq-note">${esc(o.customer_note)}</div>`:''}
       <div class="kq-timer">
-        ${ic('timer')}<span class="kq-timer-label">${stage==='pending'?'Estimated':'Time'}</span>
-        <span class="kq-timer-val ${tClass}">${stage==='pending'?o.estimated_minutes+' min':(o.is_delayed?'+'+(o.elapsed_minutes-o.estimated_minutes)+' min late':o.remaining_minutes+' min left')}</span>
+        ${ic('timer')}<span class="kq-timer-label">${stage==='pending'?'Waiting':'Time'}</span>
+        <span class="kq-timer-val ${stage==='pending'?(o.elapsed_minutes>=5?'late':o.elapsed_minutes>=2?'warn':'ok'):tClass}">${stage==='pending'?(o.elapsed_minutes<1?'just now':o.elapsed_minutes+' min')+' · est. '+o.estimated_minutes+' min':(o.is_delayed?'+'+(o.elapsed_minutes-o.estimated_minutes)+' min late':o.remaining_minutes+' min left')}</span>
       </div>
       <div class="kq-progress-track"><div class="kq-progress-fill ${tClass}" style="width:${stage==='pending'?0:pct}%"></div></div>
       ${actions}
@@ -188,8 +216,21 @@ async function checkAndRenderStock(kitchenOrderId){
     limited_stock: {cls:'kq-stock-limited', label:'Limited Stock'},
     cannot_prepare:{cls:'kq-stock-bad',     label:'Cannot Prepare'},
   };
-  const info = map[res.status] || map.can_prepare;
-  el.innerHTML = `<span class="kq-stock-badge ${info.cls}">${info.label}</span>`;
+  _kqStockCache[kitchenOrderId] = { status: res.status, at: Date.now() };
+  _kqPaintStock(kitchenOrderId, res.status);
+}
+
+function _kqPaintStock(id, status){
+  const el = document.getElementById(`kqStockBadge-${id}`);
+  if (!el) return;
+  const map = {
+    can_prepare:   {cls:'kq-stock-ok',      label:'Can Prepare'},
+    limited_stock: {cls:'kq-stock-limited', label:'Limited Stock'},
+    cannot_prepare:{cls:'kq-stock-bad',     label:'Cannot Prepare'},
+  };
+  const info = map[status] || map.can_prepare;
+  const html = `<span class="kq-stock-badge ${info.cls}">${info.label}</span>`;
+  if (el.innerHTML !== html) el.innerHTML = html;
 }
 
 // ── ACCEPT (with time-setting modal) ────────────────

@@ -10,7 +10,8 @@
 
 const LICENSE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 const EXPIRY_WARNING_DAYS    = 5;
-const GRACE_PERIOD_DAYS      = 17;
+const GRACE_PERIOD_DAYS      = 14;   // locks after more than this many days without reaching IMS
+const RECONNECT_PROBE_MS     = 30 * 1000;
 
 // ── DEVICE UUID ───────────────────────────────────
 function createDeviceUuid() {
@@ -157,13 +158,17 @@ async function activateWithKey(key, retryOnDeviceConflict = true) {
 }
 
 // ── AUTO RENEW LICENSE ────────────────────────────
+// Why the last renewal failed while online (null = offline or no attempt).
+// Used so the banner tells the real reason instead of "No internet".
+let licenseRenewError = null;
+
 async function renewLicense() {
-  if (!navigator.onLine) return false;
+  if (!navigator.onLine) { licenseRenewError = null; return false; }
   try {
     const imsUrl    = await getImsUrl();
     const clientId  = await getClientId();
     const deviceUuid= await getDeviceUuid();
-    if (!clientId) return false;
+    if (!clientId) { licenseRenewError = 'This device has no IMS client saved. Enter the activation key again.'; return false; }
 
     const res = await fetch(getImsActivationUrl(imsUrl, 'renew'), {
       method: 'POST',
@@ -171,12 +176,21 @@ async function renewLicense() {
       body: JSON.stringify({ clientId, deviceUuid }),
     });
 
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) {
+      licenseRenewError = `IMS gave an unreadable answer (HTTP ${res.status}).`;
+      console.warn('[License] Non-JSON renew answer:', res.status, text.slice(0, 300));
+      return false;
+    }
     if (data.ok && data.token) {
+      licenseRenewError = null;
       await saveLicense(data.token, clientId, data.barName);
       console.log('[License] Renewed successfully ');
       return true;
     }
+    licenseRenewError = data.message || data.error || `IMS refused the renewal (HTTP ${res.status}).`;
 
     // Handle immediate lock scenarios — clear token so lock screen shows
     if (data.lockNow ||
@@ -192,9 +206,24 @@ async function renewLicense() {
     console.warn('[License] Renewal failed:', data.error);
     return false;
   } catch(e) {
+    licenseRenewError = navigator.onLine ? `Cannot reach the IMS server (${e.message}).` : null;
     console.warn('[License] Cannot reach IMS:', e.message);
     return false;
   }
+}
+
+// Show the sign-in form unless the app is already open.
+function showLoginIfIdle() {
+  const loginWrap = document.getElementById('loginWrap');
+  const appShell = document.getElementById('appShell');
+  if (loginWrap && loginWrap.style.display === 'none' && appShell?.style.display !== 'flex') {
+    loginWrap.style.display = 'flex';
+  }
+}
+
+async function daysSinceImsSync() {
+  const lastSync = await dbGet('cache_meta', 'last_ims_sync');
+  return lastSync ? Math.floor((Date.now() - lastSync.timestamp) / 86400000) : GRACE_PERIOD_DAYS + 1;
 }
 
 // ── CHECK LICENSE ─────────────────────────────────
@@ -222,10 +251,7 @@ async function checkLicense() {
 
   // Check token expiry with grace period
   if (payload.expiresAt && now > payload.expiresAt) {
-    const lastSync = await dbGet('cache_meta', 'last_ims_sync');
-    const daysSince = lastSync
-      ? Math.floor((Date.now() - lastSync.timestamp) / 86400000)
-      : GRACE_PERIOD_DAYS + 1;
+    const daysSince = await daysSinceImsSync();
 
     if (daysSince > GRACE_PERIOD_DAYS) {
       showLockScreen('grace_expired', payload);
@@ -233,8 +259,12 @@ async function checkLicense() {
     }
     // In grace period — show warning but allow
     const daysLeft = GRACE_PERIOD_DAYS - daysSince;
-    showExpiryWarning(`No internet for ${daysSince} days — connect soon or app locks in ${daysLeft} days`, true);
+    const when = daysLeft > 0 ? `in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}` : 'tomorrow';
+    showExpiryWarning(licenseRenewError
+      ? `License not renewed for ${daysSince} days: ${escapeLicenseText(licenseRenewError)} The app locks ${when} — contact IMS Company.`
+      : `No internet for ${daysSince} days — connect soon or the app locks ${when}`, true);
     hideLockScreen();
+    showLoginIfIdle();
     return true;
   }
 
@@ -247,12 +277,10 @@ async function checkLicense() {
   }
 
   hideLockScreen();
+  // Renewed: the "no sync for N days" banner is out of date
+  if (typeof hideDataLimitBanner === 'function') hideDataLimitBanner();
   // Show login only before authentication; renewal checks must not cover the app.
-  const loginWrap = document.getElementById('loginWrap');
-  const appShell = document.getElementById('appShell');
-  if (loginWrap && loginWrap.style.display === 'none' && appShell?.style.display !== 'flex') {
-    loginWrap.style.display = 'flex';
-  }
+  showLoginIfIdle();
   console.log('[License] Valid — sub ends in', daysUntilSubEnd, 'days');
   return true;
 }
@@ -365,7 +393,7 @@ function showLockScreen(reason, payload) {
 
   const msgs = {
     subscription_ended: { icon:'', title:'Subscription Ended',    msg:'Your subscription has ended. Contact IMS Company to renew.', color:'#FF4D6D' },
-    grace_expired:      { icon:'', title:'System Locked',          msg:'No internet for too long. Connect to internet to unlock.', color:'#FF4D6D' },
+    grace_expired:      { icon:'', title:'System Locked',          msg:`No internet for more than ${GRACE_PERIOD_DAYS} days. Connect to the internet — the app unlocks and syncs by itself as soon as it is back.`, color:'#FF4D6D' },
     suspended:          { icon:'', title:'Account Suspended',      msg:'Your subscription has been suspended. Contact IMS Company.', color:'#FF8C42' },
     device_blocked:     { icon:'', title:'Device Blocked',         msg:'This device has been blocked by IMS Company. Contact support.', color:'#FF4D6D' },
     no_subscription:    { icon:'', title:'No Active Subscription', msg:'No active subscription found. Contact IMS Company to subscribe.', color:'#FF8C42' },
@@ -435,6 +463,10 @@ function hideLockScreen() {
   removeExisting('imsLockScreen');
 }
 
+function escapeLicenseText(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
 function removeExisting(id) {
   const el = document.getElementById(id);
   if (el) el.remove();
@@ -488,10 +520,37 @@ async function initLicenseSystem() {
     await checkLicense();
   }, LICENSE_CHECK_INTERVAL);
 
-  // Renew immediately when internet returns
-  window.addEventListener('online', async () => {
-    console.log('[License] Online — checking license...');
-    await renewLicense();
-    await checkLicense();
+  // Renew, unlock and sync immediately when internet returns
+  window.addEventListener('online', () => {
+    console.log('[License] Online — renewing and syncing...');
+    onConnectionBack();
   });
+
+  // navigator.onLine is often true with no real internet (Wi-Fi without data), and then no
+  // 'online' event comes when it returns. While the license is out of date, keep trying.
+  setInterval(async () => {
+    const token = await getLicense();
+    const payload = token && decodeLicensePayload(token);
+    if (!payload) return;                       // activation screen: nothing to renew
+    const expired = payload.expiresAt && Math.floor(Date.now() / 1000) > payload.expiresAt;
+    if (!expired) return;
+    if (navigator.onLine) { await onConnectionBack(); return; }
+    // fully offline: lock on time instead of waiting for the 24hr check
+    if (!document.getElementById('imsLockScreen') && await daysSinceImsSync() > GRACE_PERIOD_DAYS) await checkLicense();
+  }, RECONNECT_PROBE_MS);
+}
+
+// ── INTERNET BACK: renew → unlock → sync ──────────
+let _reconnecting = false;
+async function onConnectionBack() {
+  if (_reconnecting) return;
+  _reconnecting = true;
+  try {
+    const renewed = await renewLicense();
+    // re-check only when something changed, so a lock screen or banner is not redrawn every probe
+    if (renewed || !(await getLicense())) await checkLicense();
+    if (renewed && typeof syncPendingItems === 'function') await syncPendingItems();
+  } finally {
+    _reconnecting = false;
+  }
 }

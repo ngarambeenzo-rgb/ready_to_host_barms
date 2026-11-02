@@ -259,6 +259,7 @@ if ($action === 'ingredient_add') {
     $costPerUnit = (float)($body['costPerUnit'] ?? 0);
     if (!$name || !$unit) jsonOut(['ok' => false, 'error' => 'Name and unit required'], 400);
     if ($costPerUnit < 0) jsonOut(['ok' => false, 'error' => 'Cost cannot be negative'], 400);
+    if ($quantity > 0 && $costPerUnit <= 0) jsonOut(['ok' => false, 'error' => 'Enter the cost per unit so stock value and recipe cost are correct'], 400);
     $db->prepare('INSERT INTO bar_ingredients (name, quantity, unit, cost_per_unit, min_stock) VALUES (?,?,?,?,?)')
        ->execute([$name, $quantity, $unit, $costPerUnit, $minStock]);
     $newId = (int)$db->lastInsertId();
@@ -281,6 +282,7 @@ if ($action === 'ingredient_update') {
     $costPerUnit = (float)($body['costPerUnit'] ?? 0);
     if (!$id || !$name || !$unit) jsonOut(['ok' => false, 'error' => 'Invalid data'], 400);
     if ($costPerUnit < 0) jsonOut(['ok' => false, 'error' => 'Cost cannot be negative'], 400);
+    if ($quantity > 0 && $costPerUnit <= 0) jsonOut(['ok' => false, 'error' => 'Enter the cost per unit so stock value and recipe cost are correct'], 400);
     $old = $db->prepare('SELECT quantity FROM bar_ingredients WHERE id = ? LIMIT 1');
     $old->execute([$id]);
     $oldQty = (float)$old->fetchColumn();

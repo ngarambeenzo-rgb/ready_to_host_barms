@@ -164,7 +164,12 @@ self.addEventListener('fetch', event => {
         return caches.match(event.request).then(cached => {
           if (cached) return cached;
           if (event.request.mode === 'navigate') {
-            return caches.match(at('index.php'));
+            // opened offline at another address (e.g. ?page=… from the home-screen shortcut):
+            // the app is one page, so any saved copy of it will do
+            return caches.match(event.request, { ignoreSearch: true })
+              .then(r => r || caches.match(at('')))
+              .then(r => r || caches.match(at('index.php'), { ignoreSearch: true }))
+              .then(r => r || new Response('Offline', { status: 503 }));
           }
           return new Response('Offline', { status: 503 });
         });

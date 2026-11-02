@@ -175,7 +175,7 @@ function arBuildReportHtml(R) {
     </div>
     <h3>Best-selling items</h3>
     ${xrHBars([...S.items].sort((a, b) => b.gross - a.gross), 'name', 'gross')}
-    ${S.shifts.length ? `<h3>Cash drawer by shift</h3>${xrTable([{ k: 'user', l: 'Staff' }, { k: 'openedAt', l: 'Opened' }, { k: 'expected', l: 'Expected cash', t: 'm', sum: 1 }, { k: 'counted', l: 'Counted', t: 'm', sum: 1 }, { k: 'difference', l: 'Difference', t: 'm', sum: 1 }], S.shifts)}` : ''}
+    ${S.shifts.length ? `<h3>Cash drawer by shift</h3>${xrTable([{ k: 'user', l: 'Staff' }, { k: 'openedAt', l: 'Opened' }, { k: 'expected', l: 'Expected cash', t: 'm', sum: 1 }, { k: 'counted', l: 'Counted', t: 'm', sum: 1 }, { k: 'difference', l: 'Difference', t: 'm', sum: 1 }, { k: 'othersOrders', l: 'Orders paid by others', t: 'q', f: r => (r.breakdown && r.breakdown.othersOrders) || 0 }], S.shifts)}` : ''}
     ${S.refunds.length ? `<h3>Refunds</h3>${xrTable([{ k: 'date', l: 'Date', f: r => xr.date(r.date) }, { k: 'order', l: 'Order' }, { k: 'name', l: 'Item' }, { k: 'total', l: 'Amount', t: 'm', sum: 1 }, { k: 'reason', l: 'Reason' }, { k: 'by', l: 'By' }], S.refunds)}` : ''}
     ${S.discounts.length ? `<h3>Discounts</h3>${xrTable([{ k: 'date', l: 'Date', f: r => xr.date(r.date) }, { k: 'order', l: 'Order' }, { k: 'discount', l: 'Discount', t: 'm', sum: 1 }, { k: 'reason', l: 'Reason' }, { k: 'by', l: 'Given by' }], S.discounts)}` : ''}`)}
 
@@ -487,7 +487,7 @@ function arBuildWorkbookSheets(R) {
     ...(R.worth ? [sheet('Business Worth', `Business worth on ${R.worth.end.asOf}`, [{ k: 'group', l: 'Group', w: 24 }, { k: 'item', l: 'Item', w: 34 }, { k: 'value', l: 'Value', t: 'm', sum: 1 }, { k: 'note', l: 'Note', w: 50 }],
       arWorthLines(R.worth.end).concat([{ group: '' }, { group: 'How the worth changed' }], arWorthChangeRows(R.worth).map(r => ({ group: '', item: r.l, value: r.v }))))] : []),
     sheet('Shifts', 'Cash drawer by shift', [{ k: 'user', l: 'Staff', w: 20 }, { k: 'device', l: 'Device', w: 18 }, { k: 'openedAt', l: 'Opened', w: 18 }, { k: 'closedAt', l: 'Closed', w: 18 }, { k: 'openingFloat', l: 'Start cash', t: 'm' },
-      { k: 'expected', l: 'Expected', t: 'm', sum: 1 }, { k: 'counted', l: 'Counted', t: 'm', sum: 1 }, { k: 'difference', l: 'Difference', t: 'm', sum: 1 }, { k: 'note', l: 'Note', w: 30 }], R.expenses.shifts),
+      { k: 'expected', l: 'Expected', t: 'm', sum: 1 }, { k: 'counted', l: 'Counted', t: 'm', sum: 1 }, { k: 'difference', l: 'Difference', t: 'm', sum: 1 }, { k: 'othersOrders', l: 'Orders paid by others', t: 'q', f: r => (r.breakdown && r.breakdown.othersOrders) || 0 }, { k: 'note', l: 'Note', w: 30 }], R.expenses.shifts),
     sheet('Points to Review', 'Points to review', [{ k: 'severity', l: 'Importance', f: r => ({ high: 'High', medium: 'Medium', low: 'Low' }[r.severity]) }, { k: 'type', l: 'Type', w: 24 }, { k: 'title', l: 'Issue', w: 45 }, { k: 'evidence', l: 'Details', w: 70 }, { k: 'impact', l: 'Possible impact', t: 'm' }, { k: 'status', l: 'Status', f: r => ({ open: 'Open', review: 'Under review', resolved: 'Resolved', dismissed: 'Dismissed' }[r.status]) }, { k: 'note', l: 'Note', w: 30 }], R.issues.issues),
   ];
 }

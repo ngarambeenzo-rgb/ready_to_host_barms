@@ -20,11 +20,11 @@
 
 // BarMS tables (never ims_* — those belong to IMS)
 const BARMS_TENANT_TABLES = [
-    'api_tokens','audit_log','business_assets','request_keys','system_incidents','system_incident_events','bar_ingredients','bar_items','bar_movements','bar_recipe_ingredients','bar_recipes','bar_sales',
+    'attendance','api_tokens','audit_log','business_assets','request_keys','system_incidents','system_incident_events','bar_ingredients','bar_items','bar_movements','bar_recipe_ingredients','bar_recipes','bar_sales',
     'cash_movements','counters','customer_debts','discount_rules','employee_debts','employees','expenses','inventory_purchases',
     'kitchen_deductions','kitchen_expenses','kitchen_ingredients','kitchen_menu','kitchen_order_items','kitchen_orders',
     'kitchen_prep_history','kitchen_recipes','kitchen_revenue','kitchen_sales','kitchen_stock_movements','mgr_permissions',
-    'notifications','order_items','order_refund_items','order_refunds','orders','products','recipe_ingredients','report_issues',
+    'notifications','offline_rejects','order_items','order_refund_items','order_refunds','orders','products','recipe_ingredients','report_issues',
     'salary_payments','sales','settings','shifts','stock_count_lines','stock_counts','stock_movements','supplier_payments',
     'support_requests','table_session_items','table_sessions','tables','users','void_requests',
 ];

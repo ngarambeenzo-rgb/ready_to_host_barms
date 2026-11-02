@@ -19,7 +19,8 @@ function loadPaymentInvoice(order) {
   _piPM       = 'Cash';
   _piDelivery = 'print';
 
-  const invoiceNum = `INV-${String(order.orderId).padStart(5, '0')}`;
+  // an order made offline shows its device number (OFF-0001) until it reaches the server
+  const invoiceNum = order.orderId < 0 ? (order.offlineRef || order.orderNumber) : `INV-${String(order.orderId).padStart(5, '0')}`;
   const now = new Date();
 
   // Header
@@ -118,15 +119,22 @@ async function piCheckShift() {
   if (!hint) return;
   const res = await apiGet('shifts', 'current');
   const noShift = res.ok && !res.shift;
-  const mustHave = session.role === 'Bartender';          // bartenders cannot take money without a shift
+  const mustHave = session.role === 'Bartender';          // bartenders cannot take money when no shift is open
+  // With no shift of their own, a Bartender or Manager sells in the latest open shift of someone else
+  // (the payment is counted there and marked). The Owner never does: no shift = not in a cash count.
+  const others = (res.ok && res.others) || [];
+  const shared = noShift && others.length && session.role !== 'Owner' ? others[0] : null;
+  const block = noShift && mustHave && !shared;
   hint.style.display = noShift ? '' : 'none';
-  hint.classList.toggle('block', noShift && mustHave);
+  hint.classList.toggle('block', block);
   const txt = hint.querySelector('span');
-  if (txt) txt.innerHTML = noShift && mustHave
-    ? 'Open your shift before taking payment. Count the cash in the drawer, then you can take money.<br><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="showShiftModal()">Open shift</button>'
-    : 'You have no open shift, so this payment will not be in a cash count. Open a shift from the top bar.';
+  if (txt) {
+    if (shared) txt.textContent = `You have no shift of your own. This payment will be counted in ${shared.userName}'s shift (open since ${String(shared.openedAt).slice(11, 16)}) and marked as paid by you.`;
+    else if (block) txt.innerHTML = 'No shift is open. Open your shift before taking payment: count the cash in the drawer, then you can take money.<br><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="showShiftModal()">Open shift</button>';
+    else txt.textContent = 'You have no open shift, so this payment will not be in a cash count. Open a shift from the top bar.';
+  }
   const btn = document.getElementById('piPayBtn');
-  if (btn) { btn.disabled = noShift && mustHave; btn.classList.toggle('is-disabled', noShift && mustHave); }
+  if (btn) { btn.disabled = block; btn.classList.toggle('is-disabled', block); }
 }
 
 // ── SELECT PAYMENT METHOD ─────────────────────────
@@ -177,6 +185,7 @@ async function piPayAndClose() {
   if (res.ok) { _piOrder.discount = res.discount || 0; _piOrder.discountReason = res.discountReason || discountReason; }
 
   if (!res.ok) { toast(res.error || 'Payment failed', 'error'); return; }
+  if (res.inShiftOf) toast(`Payment counted in ${res.inShiftOf}'s shift`, 'info');
 
   if ((_piDelivery === 'sms' || _piDelivery === 'both') && phone) {
     const smsRes = await api('orders', 'send_sms', { orderId: _piOrder.orderId, phone });
@@ -203,7 +212,7 @@ async function _piShowReceiptPreview(data) {
   const items  = order.items || [];
   const total  = order.total || 0;
   const now    = new Date();
-  const invNum = `INV-${String(order.orderId).padStart(5,'0')}`;
+  const invNum = order.orderId < 0 ? (order.offlineRef || order.orderNumber) : `INV-${String(order.orderId).padStart(5,'0')}`;
   const preview = document.getElementById('piReceiptPreview');
   if (!preview) return;
   let barName = 'BarMS Pro';

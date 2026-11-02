@@ -6,7 +6,7 @@
 ═══════════════════════════════════════════════════ */
 
 const DB_NAME = 'barms_offline';
-const DB_VERSION = 1;
+const DB_VERSION = 3;   // 2: read_cache (offline copies of server answers) · 3: offline_orders
 let _db = null;
 
 // ── Open / initialize IndexedDB (Task 53) ─────────
@@ -45,10 +45,22 @@ function openDB() {
       if (!db.objectStoreNames.contains('cache_meta')) {
         db.createObjectStore('cache_meta', { keyPath: 'key' });
       }
+
+      // Last answer of each read, used on an offline device without internet (offline.js)
+      if (!db.objectStoreNames.contains('read_cache')) {
+        db.createObjectStore('read_cache', { keyPath: 'key' });
+      }
+
+      // Orders made on this device without internet, until they reach the server (offline-orders.js)
+      if (!db.objectStoreNames.contains('offline_orders')) {
+        db.createObjectStore('offline_orders', { keyPath: 'id' });
+      }
     };
 
     req.onsuccess = e => {
       _db = e.target.result;
+      // a newer version opened in another tab: let it upgrade, reopen on next use
+      _db.onversionchange = () => { _db.close(); _db = null; };
       resolve(_db);
     };
 

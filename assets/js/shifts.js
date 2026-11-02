@@ -47,6 +47,7 @@ async function showShiftModal() {
       <div style="background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:12px">
         ${line('Cash at the start', c.openingFloat)}
         ${line('Cash sales', c.cashSales, '+ ')}
+        ${c.othersOrders ? `<div style="font-size:11px;color:var(--orange);margin:-2px 0 4px">Includes ${c.othersOrders} order(s) paid by other staff who had no shift of their own${c.othersCash ? ` (${fmtRWF(c.othersCash)} in cash)` : ''}</div>` : ''}
         ${c.debtCollections ? line('Customer debts collected in cash', c.debtCollections, '+ ') : ''}
         ${c.cashIn ? line('Cash put in', c.cashIn, '+ ') : ''}
         ${c.refunds ? line('Cash refunds', c.refunds, '− ') : ''}

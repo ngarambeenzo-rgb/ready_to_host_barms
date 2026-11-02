@@ -35,7 +35,7 @@ async function loadPaidOrders() {
     return `<button class="om-order-card" onclick="showPaidOrder(${o.id})">
       <span class="om-oc-top"><span class="om-oc-no">${esc(o.orderNumber)}</span><span class="om-chip ${refunded ? 'refunded' : 'paid'}">${refunded ? 'Refunded ' + fmtRWF(o.refundedTotal) : 'Paid'}</span></span>
       <span class="om-oc-where">${ic(o.type === 'dinein' ? 'armchair' : 'bag')}${o.type === 'dinein' ? esc(o.tableName || 'Table') : 'Takeaway'} · ${esc(o.payment_method || '')}</span>
-      <span class="om-oc-meta">${esc(when)} · ${o.itemCount} item${o.itemCount !== 1 ? 's' : ''} · ${esc(o.paid_by || o.createdBy || '')}</span>
+      <span class="om-oc-meta">${esc(when)} · ${o.itemCount} item${o.itemCount !== 1 ? 's' : ''} · ${esc(o.paid_by || o.createdBy || '')}${o.shiftOwner ? ` — in ${esc(o.shiftOwner)}'s shift` : ''}</span>
       <span class="om-oc-total">${fmtRWF(o.total)}</span>
     </button>`;
   }).join('');
@@ -52,7 +52,7 @@ async function showPaidOrder(orderId) {
 
   document.getElementById('modalContent').innerHTML = `
     <h3 style="margin-bottom:4px">${esc(o.orderNumber)} — Paid</h3>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${o.type === 'dinein' ? '' + esc(o.tableName) : 'Takeaway'} · ${esc(o.paymentMethod || '')} · ${esc(o.paidAt || '')}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${o.type === 'dinein' ? '' + esc(o.tableName) : 'Takeaway'} · ${esc(o.paymentMethod || '')} · ${esc(o.paidAt || '')}${o.shiftOwner ? `<br><span style="color:var(--orange);font-weight:700">Paid by ${esc(o.paidBy || 'staff')} in ${esc(o.shiftOwner)}'s shift</span>` : ''}</div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
       <thead><tr style="border-bottom:2px solid var(--border)">
         <th style="text-align:left;padding:6px 4px;font-size:11px;color:var(--muted)">Item</th>

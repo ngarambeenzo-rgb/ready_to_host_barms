@@ -50,8 +50,8 @@ window.apiGet = async function(endpoint, action, params = {}) {
 
 // ── INVALIDATE CACHE on mutations ────────────────
 const _originalApi = api;
-window.api = async function(endpoint, action, data, method) {
-  const result = await _originalApi(endpoint, action, data, method);
+window.api = async function(endpoint, action, data, ...rest) {
+  const result = await _originalApi(endpoint, action, data, ...rest);   // (rest: retry flag, request key)
 
   if (result && result.ok) {
     // Clear related caches after any write

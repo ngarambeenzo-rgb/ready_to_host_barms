@@ -69,6 +69,7 @@ async function recordSale(){
         timestamp,
         status: 'pending',
         retryCount: 0,
+        ...(typeof offlineStamp === 'function' ? offlineStamp() : {}),
       });
 
       // Task 87: Decrement local stock immediately in IndexedDB
@@ -262,6 +263,7 @@ async function processQuickSale(){
           timestamp,
           status: 'pending',
           retryCount: 0,
+          ...(typeof offlineStamp === 'function' ? offlineStamp() : {}),
         });
         // Decrement local stock immediately
         const cached = await dbGet('products', item.id);

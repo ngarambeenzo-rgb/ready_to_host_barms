@@ -10,9 +10,25 @@
 const SYNC_INTERVAL_MS  = 15 * 60 * 1000; // 15 minutes auto sync
 const DATA_RETENTION_DAYS = 17;            // max local data age
 
+const SYNC_PROBE_MS       = 30 * 1000;      // retry this often while the internet is down
+
+// true while items are waiting because the server could not be reached
+let syncWaitingForNet = false;
+let _syncRunning = false;
+
 // ── MAIN SYNC FUNCTION ────────────────────────────
+// Several triggers (internet back, sign-in, timers) can fire together; run one pass at a time.
 async function syncPendingItems() {
-  if (!navigator.onLine) return;
+  if (_syncRunning) return;
+  _syncRunning = true;
+  try { await _syncPendingItems(); } finally { _syncRunning = false; }
+}
+
+async function _syncPendingItems() {
+  if (!navigator.onLine) { syncWaitingForNet = true; return; }
+  syncWaitingForNet = false;
+  // signed in on the server (an offline sign-in has no server session)
+  const signedIn = typeof session !== 'undefined' && !!session.userId && !session.offline;
 
   let allItems = [];
   try {
@@ -22,7 +38,10 @@ async function syncPendingItems() {
     return;
   }
 
-  const pending = allItems.filter(i => i.status === 'pending' && (i.retryCount || 0) < 5);
+  // oldest first: records reach the server in the order they happened
+  const pending = allItems.filter(i => i.status === 'pending' && (i.retryCount || 0) < 5)
+    .sort((a, b) => syncItemTime(a) - syncItemTime(b));
+  const waitUsers = new Set();   // people whose records must wait (no valid offline token)
 
   // Show syncing state
   const badge = document.getElementById('syncBadge');
@@ -36,18 +55,35 @@ async function syncPendingItems() {
 
   // ── Step 1: Sync sales and expenses to BarMS server ──
   for (const item of pending) {
+    if (waitUsers.has(item.username || '')) continue;
     try {
-      let result = null;
-      if (item.type === 'sale') {
-        result = await syncSale(item);
-      } else if (item.type === 'expense') {
-        result = await syncExpense(item);
-      }
+      const result = await syncItem(item, signedIn);
 
-      if (result && result.ok) {
+      if (result === null) {
+        // needs its own person signed in online: try again later, not counted. Marked, so the
+        // 30 s check does not keep trying it (sign-in, the 15 min pass and 'online' still do)
+        if (!item.waiting) await dbPut('sync_queue', { ...item, waiting: true });
+        continue;
+      } else if (result.ok) {
         await dbDelete('sync_queue', item.clientUuid);
+        if (typeof offlineAfterSync === 'function') await offlineAfterSync(item, result);
         syncedCount++;
-      } else if (result && result.error === 'conflict') {
+      } else if (result.network || result.server || result.error === 'offline') {
+        syncWaitingForNet = !!result.network;
+        // The server crashed on this record (500, not "busy" or "database down"): count the try,
+        // so a record that always breaks the server is set aside after 5 (System Health lists it)
+        // instead of holding up everything behind it for ever. Records keep their order: stop here.
+        if (result.httpStatus === 500 && result.error !== 'DB connection failed') {
+          await dbPut('sync_queue', { ...item, retryCount: (item.retryCount || 0) + 1 });
+        }
+        break; // connection lost or server busy: try again later, not counted as a failed try
+      } else if (result.error === 'offline_token_invalid' || /not authenticated|session expired/i.test(result.error || '')) {
+        waitUsers.add(item.username || ''); // this person must sign in online once; others go on
+        if (!item.waiting) await dbPut('sync_queue', { ...item, waiting: true });
+      } else if (result.offlineRejected) {
+        // the server refused it for a business reason: kept here and listed for the Owner
+        await dbPut('sync_queue', { ...item, status: 'failed', rejected: true, error: result.message || result.error });
+      } else if (result.error === 'conflict') {
         await dbPut('sync_queue', { ...item, status: 'conflict', conflictMessage: result.message });
         notifyConflict(item, result.message);
       } else {
@@ -80,11 +116,12 @@ async function syncPendingItems() {
     } catch(e) {}
   }
 
-  // ── Step 2: Sync with IMS (renew license + report sync) ──
-  await syncWithIMS(syncedCount);
-
-  // ── Step 3: Auto-purge old local data ──
-  await purgeOldLocalData();
+  // ── Step 2 + 3, only when something was sent (license.js renews on its own; a pass that sent
+  // nothing must not call IMS every 30 s) ──
+  if (syncedCount > 0) {
+    await syncWithIMS(syncedCount);
+    await purgeOldLocalData();
+  }
 
   // Update sync badge
   await updateSyncBadge();
@@ -199,23 +236,24 @@ async function purgeOldLocalData() {
 }
 
 // ── SYNC COUNTDOWN CHECK ──────────────────────────
-// Shows warning banner when approaching 17-day limit
+// Shows warning banner when approaching the license lock (GRACE_PERIOD_DAYS in license.js)
 async function checkSyncCountdown() {
   const lastSync = await dbGet('cache_meta', 'last_ims_sync');
   if (!lastSync || !lastSync.timestamp) return;
 
   const daysSince = Math.floor((Date.now() - lastSync.timestamp) / 86400000);
-  const daysLeft  = DATA_RETENTION_DAYS - daysSince;
+  const daysLeft  = GRACE_PERIOD_DAYS - daysSince;
 
-  if (daysSince >= 14 && daysLeft > 0) {
+  if (daysSince >= GRACE_PERIOD_DAYS - 3 && daysLeft >= 0) {
     // Show warning banner
     if (typeof showExpiryWarning === 'function') {
+      const when = daysLeft > 0 ? `within ${daysLeft} day${daysLeft !== 1 ? 's' : ''}` : 'today';
       showExpiryWarning(
-        `No sync for ${daysSince} days — connect to internet within ${daysLeft} days or app will lock`,
+        `No sync for ${daysSince} days — connect to internet ${when} or app will lock`,
         true
       );
     }
-  } else if (daysSince >= DATA_RETENTION_DAYS) {
+  } else if (daysSince > GRACE_PERIOD_DAYS) {
     // Should lock — trigger license check
     if (typeof checkLicense === 'function') {
       await checkLicense();
@@ -223,25 +261,33 @@ async function checkSyncCountdown() {
   }
 }
 
-// ── SYNC A SINGLE SALE ────────────────────────────
-async function syncSale(item) {
-  return await api('sales', 'record', {
-    productId:       item.payload.productId,
-    qty:             item.payload.qty,
-    clientUuid:      item.clientUuid,
-    clientCreatedAt: item.timestamp,
-  });
+// When a queued record was made (device time, clock-corrected for newer records)
+function syncItemTime(item) {
+  return item.at || Date.parse(item.timestamp) || 0;
 }
 
-// ── SYNC A SINGLE EXPENSE ─────────────────────────
-async function syncExpense(item) {
-  return await api('expenses', 'save', {
-    desc:       item.payload.desc,
-    category:   item.payload.category,
-    amount:     item.payload.amount,
-    date:       item.payload.date,
-    clientUuid: item.clientUuid,
-  });
+// Send one queued record. With its maker's offline token it goes up even when nobody is
+// signed in. Without one, only that same person signed in online may send it (records
+// from before offline mode have no name: whoever is signed in sends them, as before).
+// → api answer, or null when it has to wait.
+async function syncItem(item, signedIn) {
+  let target;
+  if (item.type === 'sale') {
+    target = ['sales', 'record', { productId: item.payload.productId, qty: item.payload.qty, clientUuid: item.clientUuid, clientCreatedAt: item.timestamp }];
+  } else if (item.type === 'expense') {
+    const p = item.payload;
+    target = ['expenses', 'save', { desc: p.desc, category: p.category, amount: p.amount, date: p.date, paymentMethod: p.paymentMethod || 'Cash', clientUuid: item.clientUuid }];
+  } else if (item.type === 'op') {
+    target = [item.resource, item.action, item.payload];
+  } else {
+    return null;
+  }
+  if (typeof offlineSend === 'function') {
+    const viaToken = await offlineSend(item, ...target);
+    if (!viaToken.noToken) return viaToken;
+  }
+  if (!signedIn || (item.username && item.username !== session.username)) return null;
+  return (typeof apiRaw === 'function' ? apiRaw : api)(...target);   // the real server, never the offline order screens
 }
 
 // ── NOTIFY CONFLICT ────────────────────────────────
@@ -264,8 +310,20 @@ setInterval(async () => {
 // ── SYNC ON INTERNET RETURN ───────────────────────
 window.addEventListener('online', () => {
   console.log('[Sync] Internet returned — syncing...');
-  setTimeout(syncPendingItems, 1500);
+  syncPendingItems();
 });
+
+// The 'online' event is not reliable (Wi-Fi connected without internet), so check often:
+// items never tried yet, or waiting because the server could not be reached, go up as
+// soon as the internet answers. Items that failed for another reason wait for the 15 min pass.
+setInterval(async () => {
+  if (!navigator.onLine || _syncRunning) return;
+  if (!syncWaitingForNet) {
+    const items = await dbGetAll('sync_queue').catch(() => []);
+    if (!items.some(i => i.status === 'pending' && !(i.retryCount > 0) && !i.waiting)) return;
+  }
+  await syncPendingItems();
+}, SYNC_PROBE_MS);
 
 // ── SYNC ON APP LOAD ──────────────────────────────
 window.addEventListener('load', async () => {
