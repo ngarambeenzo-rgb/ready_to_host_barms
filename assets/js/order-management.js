@@ -93,7 +93,8 @@ async function loadOrderManagement(orderId, fromCreation = false) {
       sourceId:   i.id,
       name:       i.name,
       price:      i.price,
-      stock:      i.type === 'direct' ? i.stock : 999, // recipe items no stock limit
+      stock:      i.type === 'direct' ? i.stock : i.type === 'portion' ? i.portions_left : 999, // recipe items no stock limit; a shot/glass = how many the bottles can still pour
+      measured:   !!i.measure_unit && i.type === 'direct', // a bottle that is also sold by the shot: only sealed ones count here
       minStock:   i.min_stock,
       itemType:   i.type, // direct or recipe
       category:   'Drink',
@@ -266,12 +267,13 @@ function _omRenderProducts(products) {
     .map(([c, label]) => [label, products.filter(p => p.category === c)])
     .filter(([, list]) => list.length);
   const tile = p => {
-    const outOfStock = p.itemType === 'direct' && p.stock <= 0;
-    const lowStock   = p.itemType === 'direct' && p.stock > 0 && p.stock <= Math.max(5, +p.minStock || 0);
+    const counted    = p.itemType === 'direct' || p.itemType === 'portion';
+    const outOfStock = counted && p.stock <= 0;
+    const lowStock   = counted && p.stock > 0 && p.stock <= (p.itemType === 'portion' ? 5 : Math.max(5, +p.minStock || 0));
     const qty        = inCart[p.id] || 0;
-    const stockText  = p.itemType === 'direct' ? `${+p.stock} in stock` : p.itemType === 'recipe' ? 'Cocktail' : 'Kitchen';
+    const stockText  = p.itemType === 'portion' ? `${+p.stock} left` : p.itemType === 'direct' ? (p.measured ? `${+p.stock} sealed` : `${+p.stock} in stock`) : p.itemType === 'recipe' ? 'Cocktail' : 'Kitchen';
     return `<button class="om-tile${outOfStock ? ' out' : ''}" data-pid="${p.id}"
-      onclick="${outOfStock ? `toast('Out of stock','error')` : `omAddItem('${p.id}', this)`}"
+      onclick="${outOfStock ? `toast('${p.measured ? 'No sealed bottle left. Sell it by the shot or glass.' : 'Out of stock'}','error')` : `omAddItem('${p.id}', this)`}"
       ${outOfStock ? 'aria-disabled="true"' : ''} title="${esc(p.name)}">
       <span class="om-tile-img">${uiProductThumb(p)}${qty ? `<span class="om-tile-qty">${qty}</span>` : ''}</span>
       <span class="om-tile-name">${esc(p.name)}</span>
@@ -292,10 +294,12 @@ async function omAddItem(productId, tileEl) {
   if (!product) return;
 
   // Stock check for direct bar items
-  if (product.itemType === 'direct' && product.stock <= 0) {
-    toast(`${product.name} is out of stock`, 'error'); return;
+  if ((product.itemType === 'direct' || product.itemType === 'portion') && product.stock <= 0) {
+    toast(product.measured ? `No sealed bottle of ${product.name} left. Sell it by the shot or glass.` : `${product.name} is out of stock`, 'error'); return;
   }
-  if (product.itemType === 'direct' && product.stock <= 3) {
+  if (product.itemType === 'portion' && product.stock <= 3) {
+    toast(`Only ${product.stock} ${product.name} left in the bottles`, 'warning');
+  } else if (product.itemType === 'direct' && product.stock <= 3) {
     toast(`Only ${product.stock} ${product.name} left in stock`, 'warning');
   }
 
@@ -321,7 +325,7 @@ async function omAddItem(productId, tileEl) {
   if (!res.ok) { toast(res.error || 'Failed to add item', 'error'); omFilterProducts(); return; }
 
   // Update local stock count for direct items
-  if (product.itemType === 'direct') product.stock = Math.max(0, product.stock - 1);
+  if (product.itemType === 'direct' || product.itemType === 'portion') product.stock = Math.max(0, product.stock - 1);
 
   _omLastAdded = product;
   await _omRefresh();
@@ -339,7 +343,7 @@ async function omChangeQty(itemId, delta) {
   // Stock check for increase
   if (delta > 0) {
     const product = _omProducts.find(p => p.sourceId === item.source_id && p.sourceType === item.source_type);
-    if (product && product.itemType === 'direct' && product.stock <= 0) {
+    if (product && (product.itemType === 'direct' || product.itemType === 'portion') && product.stock <= 0) {
       toast(`No more ${item.product_name} in stock`, 'error'); return;
     }
   }

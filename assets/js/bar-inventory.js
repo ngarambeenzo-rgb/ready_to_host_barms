@@ -22,7 +22,8 @@ async function loadBarItems() {
   _biRecipes     = recRes.data    || [];
   _biIngredients = ingRes.data    || [];
   // Recipe items hold no stock of their own; their value is in the ingredients page
-  renderStockValueBox('biItemsValueBox', _biAllItems.filter(i => i.type === 'direct').map(i => ({ qty: i.stock, unitCost: i.cost_price })));
+  // an opened bottle still counts: its share of a bottle is worth its share of the cost
+  renderStockValueBox('biItemsValueBox', _biAllItems.filter(i => i.type === 'direct').map(i => ({ qty: i.stock + (i.bottle_size > 0 ? Math.max(0, i.open_amount) / i.bottle_size : 0), unitCost: i.cost_price })));
   _renderBarItems();
 }
 
@@ -42,7 +43,8 @@ function filterBarItems(type, btn, search) {
 function _renderBarItems(search = '') {
   const tbody = document.getElementById('biItemsBody');
   if (!tbody) return;
-  let items = _biAllItems;
+  // shots and glasses are shown under their bottle, not as lines of their own
+  let items = _biAllItems.filter(i => i.type !== 'portion');
   if (_biActiveFilter !== 'all') items = items.filter(i => i.type === _biActiveFilter);
   if (search) items = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
   if (!items.length) {
@@ -52,9 +54,14 @@ function _renderBarItems(search = '') {
   tbody.innerHTML = items.map(item => {
     const isLow  = item.type === 'direct' && item.stock <= item.min_stock;
     const isZero = item.type === 'direct' && item.stock <= 0;
+    const measured = item.type === 'direct' && !!item.measure_unit;
+    const portions = measured ? _biAllItems.filter(p => p.type === 'portion' && +p.parent_id === item.id && +p.active) : [];
     const stockDisplay = item.type === 'direct'
-      ? `<span style="font-weight:800;color:${isZero?'var(--red)':isLow?'var(--orange)':'var(--text)'}">${item.stock}</span>`
+      ? `<span style="font-weight:800;color:${isZero?'var(--red)':isLow?'var(--orange)':'var(--text)'}">${item.stock}</span>${measured ? `<div style="font-size:10px;color:var(--muted)">sealed</div><div style="font-size:11px;margin-top:3px;color:var(--text)">Open: <b>${_biAmt(item.open_amount, item.measure_unit)}</b></div>` : ''}`
       : `<span style="color:var(--muted);font-size:11px">—</span>`;
+    const portionChips = portions.length
+      ? `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">${portions.map(p => `<span style="font-size:10.5px;padding:2px 8px;border-radius:10px;background:rgba(14,168,117,.12);color:var(--green);font-weight:700;white-space:nowrap">${esc(p.pack_name || 'Portion')} ${_biAmt(p.portion_size, item.measure_unit)} · ${fmtRWF(p.price)} · ${p.portions_left} left</span>`).join('')}</div>`
+      : '';
     const typeLabel = item.type === 'direct'
       ? `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:var(--blue-lt);color:var(--blue)">Direct</span>`
       : `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(124,58,237,.1);color:#7C3AED">Recipe</span>`;
@@ -63,13 +70,13 @@ function _renderBarItems(search = '') {
         <div class="item-cell">${uiThumbButton('bar', item)}<div style="min-width:0">
         <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(item.name)}</div>
         ${isLow && !isZero ? `<div style="font-size:11px;color:var(--ink-orange)">Low stock</div>` : ''}
-        ${isZero ? `<div style="font-size:11px;color:var(--ink-red)">Out of stock</div>` : ''}</div></div>
+        ${isZero ? `<div style="font-size:11px;color:var(--ink-red)">${measured ? 'No sealed bottle' : 'Out of stock'}</div>` : ''}${portionChips}</div></div>
       </td>
       <td style="padding:12px 16px;text-align:center">${typeLabel}</td>
       <td style="padding:12px 16px;text-align:right;font-size:13px;font-weight:700;color:var(--blue)">${fmtRWF(item.price)}</td>
       <td style="padding:12px 16px;text-align:right;font-size:12px;color:${item.unit_cost>0?'var(--muted)':'var(--orange)'}">${item.unit_cost>0?fmtRWF(item.unit_cost):'No cost'}${item.type==='recipe'?'<div style="font-size:10px">from ingredients</div>':''}</td>
       <td style="padding:12px 16px;text-align:center">${stockDisplay}</td>
-      <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:700">${item.type === 'direct' ? fmtRWF(item.stock * item.cost_price) : '—'}</td>
+      <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:700">${item.type === 'direct' ? fmtRWF((item.stock + (measured && item.bottle_size > 0 ? Math.max(0, item.open_amount) / item.bottle_size : 0)) * item.cost_price) : '—'}</td>
       <td style="padding:12px 16px;font-size:12px;color:var(--muted)">${esc(item.recipe_name || '—')}</td>
       <td style="padding:12px 16px;text-align:center">
         <span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${item.active?'rgba(14,168,117,.12)':'rgba(200,200,200,.2)'};color:${item.active?'var(--green)':'var(--muted)'}">
@@ -78,6 +85,7 @@ function _renderBarItems(search = '') {
       </td>
       <td style="padding:12px 16px;text-align:center">
         <div style="display:flex;gap:6px;justify-content:center">
+          ${measured?`<button data-perm="canEditStock" onclick="showMeasureCheckModal(${item.id})" style="background:rgba(37,99,235,.1);border:none;color:var(--blue);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:11px;white-space:nowrap">Check bottle</button>`:''}
           ${item.type==='direct'?`<button data-perm="canEditStock" onclick="showAddStockToItemModal(${item.id})" style="background:rgba(14,168,117,.1);border:none;color:var(--green);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:11px">+Stock</button>`:`<button onclick="showBarItemCosting(${item.id})" style="background:rgba(124,58,237,.1);border:none;color:#7C3AED;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:11px">Costing</button>`}
           <button data-perm="canManageItems" class="icon-act" onclick="showEditBarItemModal(${item.id})" title="Edit" aria-label="Edit">${ic('pencil')}</button>
           <button data-perm="canManageItems" class="icon-act danger" onclick="deleteBarItem(${item.id})" title="Delete" aria-label="Delete">${ic('trash')}</button>
@@ -142,10 +150,36 @@ function _showBarItemModal(item) {
           <input type="number" class="form-input" id="biUnitsPerPack" min="2" step="1" value="${item?.units_per_pack || ''}" placeholder="e.g. 12 or 24"/></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group"><label class="form-label">Current Stock</label>
+        <div class="form-group"><label class="form-label" id="biStockLabel">Current Stock</label>
           <input type="number" class="form-input" id="biStock" value="${item?.stock||'0'}" min="0"/></div>
         <div class="form-group"><label class="form-label">Min Stock Alert</label>
           <input type="number" class="form-input" id="biMinStock" value="${item?.min_stock||'5'}" min="0"/></div>
+      </div>
+      <!-- Sell by the shot or glass -->
+      <label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:13px;cursor:pointer;margin:4px 0 8px">
+        <input type="checkbox" id="biMeasureOn" ${item?.measure_unit ? 'checked' : ''} onchange="biToggleMeasure()"/> Also sell it by the shot or glass</label>
+      <div id="biMeasureBox" style="display:none;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;background:var(--bg)">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5">Pick the unit you use. The bottle stays one item: a shot or glass pours from the open bottle and opens a new sealed one by itself when it runs out. A whole bottle can only be sold from the sealed ones.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group"><label class="form-label">Measure in</label>
+            <select class="form-input" id="biMUnit" onchange="biMeasureUnitChanged()">
+              ${Object.entries(BI_MEASURE_UNITS).map(([k, v]) => `<option value="${k}" ${(item?.measure_unit || 'ml') === k ? 'selected' : ''}>${v}</option>`).join('')}
+            </select></div>
+          <div class="form-group"><label class="form-label">One full bottle holds <span id="biMUnitTxt1"></span></label>
+            <input type="number" class="form-input" id="biMBottle" min="0" step="any" value="${item?.bottle_size || ''}" placeholder="e.g. 750"/></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin:2px 0 6px">Shots and glasses you sell</div>
+        <div id="biPortionList"></div>
+        <button type="button" onclick="biAddPortion()" style="background:none;border:1px dashed var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-family:inherit;font-size:12px;color:var(--blue);margin:4px 0 12px">+ Add a shot or glass size</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          ${item?.id ? '' : `<div class="form-group"><label class="form-label">Already open now (optional) <span id="biMUnitTxt2"></span></label>
+            <input type="number" class="form-input" id="biMOpen" min="0" step="any" placeholder="how much is left in it"/></div>`}
+          <div class="form-group"><label class="form-label">Empty bottle weight (g, optional)</label>
+            <input type="number" class="form-input" id="biMEmpty" min="0" step="any" value="${item?.empty_weight || ''}" placeholder="to check by weighing"/></div>
+          <div class="form-group" id="biMDensityWrap"><label class="form-label">Liquid weight per ml (g)</label>
+            <input type="number" class="form-input" id="biMDensity" min="0.5" max="1.5" step="0.01" value="${item?.density || ''}" placeholder="0.94 for spirits"/></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5">Weighing is optional. If you fill in the empty bottle's weight, you can later weigh the open bottle (or read its level, or type what is left) from <b>Check bottle</b> and see how much is missing.</div>
       </div>
     </div>
     <!-- Recipe: ingredients -->
@@ -169,8 +203,50 @@ function _showBarItemModal(item) {
       <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal()">Cancel</button>
     </div>`;
   document.getElementById('modalOverlay').classList.add('show');
+  _biTempPortions = (item?.portions || []).map(p => ({ id: p.id, name: p.name, size: +p.size, price: +p.price }));
   _biRenderRecipeIngs();
+  biToggleMeasure(true);
 }
+
+// ── sell by the shot or glass ──────────────────────
+const BI_MEASURE_UNITS = { ml: 'Millilitres (ml)', cl: 'Centilitres (cl)', oz: 'Fluid ounces (oz)', g: 'Grams (g), weigh the pour' };
+const BI_PORTION_PRESETS = { ml: [['Shot', 50], ['Glass', 150]], cl: [['Shot', 5], ['Glass', 15]], oz: [['Shot', 1.5], ['Glass', 5]], g: [['Shot', 40], ['Glass', 120]] };
+let _biTempPortions = [];
+
+function biToggleMeasure(initial) {
+  const on = document.getElementById('biMeasureOn')?.checked && document.getElementById('biType')?.value === 'direct';
+  const box = document.getElementById('biMeasureBox'); if (!box) return;
+  box.style.display = on ? '' : 'none';
+  const lbl = document.getElementById('biStockLabel'); if (lbl) lbl.textContent = on ? 'Sealed bottles in stock' : 'Current Stock';
+  if (on) {
+    if (!_biTempPortions.length && !initial) BI_PORTION_PRESETS[document.getElementById('biMUnit').value].forEach(([n, s]) => _biTempPortions.push({ name: n, size: s, price: '' }));
+    biMeasureUnitChanged(true);
+  }
+}
+function biMeasureUnitChanged(keep) {
+  const u = document.getElementById('biMUnit')?.value || 'ml';
+  document.querySelectorAll('#biMUnitTxt1, #biMUnitTxt2').forEach(e => e.textContent = '(' + u + ')');
+  const d = document.getElementById('biMDensityWrap'); if (d) d.style.display = u === 'g' ? 'none' : '';
+  if (keep !== true && _biTempPortions.length) {   // the owner switched unit: offer the usual sizes in the new unit
+    const pre = BI_PORTION_PRESETS[u];
+    _biTempPortions.forEach(p => { const m = pre.find(x => x[0] === p.name); if (m) p.size = m[1]; });
+  }
+  _biRenderPortions();
+}
+function _biRenderPortions() {
+  const el = document.getElementById('biPortionList'); if (!el) return;
+  const u = document.getElementById('biMUnit')?.value || 'ml';
+  el.innerHTML = _biTempPortions.map((p, i) => `
+    <div style="display:grid;grid-template-columns:1.1fr 1fr 1.1fr 28px;gap:8px;margin-bottom:8px;align-items:end">
+      <div><div style="font-size:10px;color:var(--muted)">Name</div><input class="form-input" value="${esc(p.name)}" oninput="_biTempPortions[${i}].name=this.value" placeholder="Shot, Glass, Tot"/></div>
+      <div><div style="font-size:10px;color:var(--muted)">Amount (${u})</div><input type="number" class="form-input" min="0" step="any" value="${p.size}" oninput="_biTempPortions[${i}].size=+this.value"/></div>
+      <div><div style="font-size:10px;color:var(--muted)">Price (RWF)</div><input type="number" class="form-input" min="0" value="${p.price}" oninput="_biTempPortions[${i}].price=+this.value"/></div>
+      <button type="button" onclick="_biTempPortions.splice(${i},1);_biRenderPortions()" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:15px;height:34px" aria-label="Remove">✕</button>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:12px;margin-bottom:6px">No shot or glass added yet</div>';
+}
+function biAddPortion() { _biTempPortions.push({ name: '', size: '', price: '' }); _biRenderPortions(); }
+
+function _biAmt(n, unit) { return (Math.round((+n || 0) * 10) / 10) + ' ' + (unit || ''); }
 
 function biToggleType() {
   const type = document.getElementById('biType')?.value;
@@ -225,8 +301,21 @@ async function submitBarItem(id) {
   const packName = document.getElementById('biPackName')?.value || '';
   const unitsPerPack = +document.getElementById('biUnitsPerPack')?.value || 0;
   if (type === 'direct' && packName && unitsPerPack < 2) { toast(`Enter how many units are in one ${packName.toLowerCase()}`, 'error'); return; }
+  let measure = { enabled: false };
+  if (type === 'direct' && document.getElementById('biMeasureOn')?.checked) {
+    const bottleSize = +document.getElementById('biMBottle')?.value || 0;
+    if (!bottleSize) { toast('Enter how much one full bottle holds', 'error'); return; }
+    if (!_biTempPortions.length) { toast('Add at least one shot or glass size, or untick "sell by the shot or glass"', 'error'); return; }
+    if (_biTempPortions.some(p => !String(p.name || '').trim() || !(+p.size > 0) || !(+p.price > 0))) { toast('Each shot or glass needs a name, an amount and a price', 'error'); return; }
+    measure = {
+      enabled: true, unit: document.getElementById('biMUnit').value, bottleSize,
+      emptyWeight: document.getElementById('biMEmpty')?.value || '', density: document.getElementById('biMDensity')?.value || '',
+      portions: _biTempPortions.map(p => ({ id: p.id || 0, name: String(p.name).trim(), size: +p.size, price: +p.price })),
+    };
+    if (!id) measure.openAmount = document.getElementById('biMOpen')?.value || '';
+  }
   const res = await api('bar-inventory', id ? 'item_update' : 'item_add', {
-    id, name, price, costPrice, type, stock, minStock, active, productType: uiTypeValue('bi'),
+    id, name, price, costPrice, type, stock, minStock, active, productType: uiTypeValue('bi'), measure,
     packName: packName && unitsPerPack > 1 ? packName : '', unitsPerPack: packName ? unitsPerPack : 0,
     recipeIngredients: type === 'recipe' ? _biTempRecipeIngs : [],
   });
@@ -234,6 +323,85 @@ async function submitBarItem(id) {
   toast(id ? 'Item updated ' : 'Item added ');
   closeModal();
   loadBarItems();
+}
+
+// ── check the open bottle: weigh it, read its level, or type what is left ──
+let _bmcItem = null;
+function _bmcFromGrams(g, unit, density) {
+  if (unit === 'g') return g;
+  const ml = g / (density > 0 ? density : 0.94);
+  return unit === 'cl' ? ml / 10 : unit === 'oz' ? ml / 29.5735 : ml;
+}
+async function showMeasureCheckModal(id) {
+  const item = _biAllItems.find(i => i.id === id); if (!item) return;
+  _bmcItem = item;
+  const hasEmpty = +item.empty_weight > 0;
+  document.getElementById('modalContent').innerHTML = `
+    <h3 style="margin-bottom:6px">Check open bottle</h3>
+    <div style="font-size:13px;margin-bottom:12px"><b>${esc(item.name)}</b> · the system expects <b>${_biAmt(item.open_amount, item.measure_unit)}</b> in the open bottle</div>
+    <div class="form-group"><label class="form-label">How do you check it?</label>
+      <select class="form-input" id="bmcMethod" onchange="bmcMethodChanged()">
+        <option value="gross" ${hasEmpty ? 'selected' : ''}>Weigh the bottle on the scale (grams)</option>
+        <option value="level" ${hasEmpty ? '' : 'selected'}>Read the level by eye (tenths)</option>
+        <option value="amount">I measured how much is left (${esc(item.measure_unit)})</option>
+      </select></div>
+    <div class="form-group"><label class="form-label" id="bmcLabel"></label>
+      <input type="number" class="form-input" id="bmcValue" min="0" step="any" oninput="bmcPreview()"/>
+      <div id="bmcPreview" style="font-size:12px;color:var(--muted);margin-top:5px;min-height:16px"></div></div>
+    <div class="form-group"><label class="form-label">Note (optional)</label>
+      <input class="form-input" id="bmcNote" maxlength="120" placeholder="e.g. morning check"/></div>
+    <div id="bmcResult"></div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="submitMeasureCheck()">Save check</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal()">Close</button>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin:16px 0 6px">Recent checks</div>
+    <div id="bmcHistory" style="font-size:12px"></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+  bmcMethodChanged();
+  _bmcHistory(id);
+}
+function bmcMethodChanged() {
+  const m = document.getElementById('bmcMethod').value, it = _bmcItem;
+  const lab = { gross: 'Weight of the bottle with the drink in it (g)', level: 'How full is it? (0 = empty, 10 = full)', amount: `Amount left (${it.measure_unit})` };
+  document.getElementById('bmcLabel').textContent = lab[m];
+  const v = document.getElementById('bmcValue'); v.value = '';
+  if (m === 'gross' && !(+it.empty_weight > 0)) document.getElementById('bmcPreview').textContent = 'Add the empty-bottle weight first: Edit item, then "Empty bottle weight".';
+  else document.getElementById('bmcPreview').textContent = '';
+}
+function bmcPreview() {
+  const it = _bmcItem, m = document.getElementById('bmcMethod').value, val = +document.getElementById('bmcValue').value, out = document.getElementById('bmcPreview');
+  if (!val && val !== 0) { out.textContent = ''; return; }
+  let found = null;
+  if (m === 'gross' && +it.empty_weight > 0) found = val >= +it.empty_weight ? _bmcFromGrams(val - it.empty_weight, it.measure_unit, +it.density) : null;
+  else if (m === 'level') found = val / 10 * it.bottle_size;
+  else if (m === 'amount') found = val;
+  out.textContent = found === null ? (m === 'gross' ? 'That is lighter than the empty bottle.' : '') : `About ${_biAmt(found, it.measure_unit)} left`;
+}
+async function submitMeasureCheck() {
+  const it = _bmcItem, value = document.getElementById('bmcValue').value;
+  if (value === '') { toast('Enter the weight, level or amount', 'error'); return; }
+  const res = await api('bar-inventory', 'measure_check', { id: it.id, method: document.getElementById('bmcMethod').value, value: +value, note: document.getElementById('bmcNote').value });
+  if (!res.ok) { toast(res.error || 'Could not save the check', 'error'); return; }
+  const short = res.diff < -0.05, over = res.diff > 0.05;
+  const col = short ? 'var(--red)' : over ? 'var(--orange)' : 'var(--green)';
+  document.getElementById('bmcResult').innerHTML = `<div style="border:1px solid ${col};border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;line-height:1.6">
+    Found <b>${_biAmt(res.found, res.unit)}</b>, the system expected <b>${_biAmt(res.expected, res.unit)}</b>.<br>
+    <b style="color:${col}">${short ? `${_biAmt(-res.diff, res.unit)} missing` : over ? `${_biAmt(res.diff, res.unit)} more than expected` : 'Matches the sales'}</b>${res.portions !== null && (short || over) ? ` (about ${Math.abs(res.portions)} shot${Math.abs(res.portions) === 1 ? '' : 's'}, ${fmtRWF(Math.abs(res.value))})` : ''}.
+    The open bottle now counts as ${_biAmt(res.found, res.unit)}.</div>`;
+  document.getElementById('bmcValue').value = ''; document.getElementById('bmcPreview').textContent = '';
+  await loadBarItems();
+  _bmcItem = _biAllItems.find(i => i.id === it.id) || it;
+  _bmcHistory(it.id);
+}
+async function _bmcHistory(id) {
+  const el = document.getElementById('bmcHistory'); if (!el) return;
+  const res = await apiGet('bar-inventory', 'measure_history', { id });
+  const rows = res.data || [];
+  el.innerHTML = rows.length ? rows.map(r => {
+    const d = +r.qty_change, c = d < -0.05 ? 'var(--red)' : d > 0.05 ? 'var(--orange)' : 'var(--green)';
+    return `<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${esc(String(r.created_at).slice(0, 16))} · ${esc(r.done_by || '')}</span><b style="color:${c}">${d > 0 ? '+' : ''}${_biAmt(d, r.unit)}${Math.abs(+r.total_cost) > 0 ? ` (${fmtRWF(Math.abs(+r.total_cost))})` : ''}</b></div>`;
+  }).join('') : '<div style="color:var(--muted)">No checks yet</div>';
 }
 
 async function deleteBarItem(id) {

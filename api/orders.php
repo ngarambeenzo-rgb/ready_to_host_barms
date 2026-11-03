@@ -17,6 +17,7 @@
 //  POST action=offline_order   a whole order made offline (offline devices only, see below)
 // ============================================================
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/measure_lib.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') requireCsrf();
 
@@ -311,12 +312,19 @@ if ($action === 'add_item') {
     // (stock may go below zero, which the stock reports show).
     $offAt = ordOfflineAt();
     if ($sourceType === 'bar' && !$offAt) {
-        $biStmt = $db->prepare('SELECT type, stock FROM bar_items WHERE id = ? AND active = 1 LIMIT 1');
+        $biStmt = $db->prepare('SELECT type, stock, parent_id, portion_size, measure_unit FROM bar_items WHERE id = ? AND active = 1 LIMIT 1');
         $biStmt->execute([$sourceId]);
         $barItem = $biStmt->fetch();
         if (!$barItem) jsonOut(['ok' => false, 'error' => 'Item not found in bar inventory'], 404);
+        if ($barItem['type'] === 'portion') {
+            // a shot or glass: enough must be left in the open bottle plus the sealed ones
+            $bottle = measureLoadBottle($db, (int)$barItem['parent_id']);
+            $left = $bottle ? measurePortionsLeft($bottle, (float)$barItem['portion_size']) : 0;
+            if ($left <= 0) jsonOut(['ok' => false, 'error' => "$name: nothing left in the bottle"], 400);
+            if ($left < $qty) jsonOut(['ok' => false, 'error' => "Only $left $name left in the bottle"], 400);
+        }
         if ($barItem['type'] === 'direct' && $barItem['stock'] <= 0) {
-            jsonOut(['ok' => false, 'error' => "$name is out of stock"], 400);
+            jsonOut(['ok' => false, 'error' => $barItem['measure_unit'] ? "No sealed bottle of $name left. The open bottle can only be sold by the shot or glass." : "$name is out of stock"], 400);
         }
         if ($barItem['type'] === 'direct' && $barItem['stock'] < $qty) {
             jsonOut(['ok' => false, 'error' => "Only {$barItem['stock']} $name left in stock"], 400);
@@ -404,9 +412,14 @@ if ($action === 'update_item') {
 
         // Check bar stock for the new quantity (stock itself is deducted at validation)
         if ($diff > 0 && ($item['source_type'] ?? 'bar') === 'bar' && !ordOfflineAt()) {   // offline: already served
-            $bStmt = $db->prepare("SELECT name, type, stock FROM bar_items WHERE id = ? LIMIT 1");
+            $bStmt = $db->prepare("SELECT name, type, stock, parent_id, portion_size FROM bar_items WHERE id = ? LIMIT 1");
             $bStmt->execute([$item['source_id'] ?: $item['product_id']]);
             $bi = $bStmt->fetch();
+            if ($bi && $bi['type'] === 'portion') {
+                $bottle = measureLoadBottle($db, (int)$bi['parent_id']);
+                $left = $bottle ? measurePortionsLeft($bottle, (float)$bi['portion_size']) : 0;
+                if ($left < $newQty) { $db->rollBack(); jsonOut(['ok' => false, 'error' => "Only $left {$bi['name']} left in the bottle"], 400); }
+            }
             if ($bi && $bi['type'] === 'direct' && (float)$bi['stock'] < $newQty) {
                 $db->rollBack();
                 jsonOut(['ok' => false, 'error' => 'Only ' . (float)$bi['stock'] . " {$bi['name']} left in stock"], 400);
@@ -489,6 +502,10 @@ function ordValidate(PDO $db, int $orderId, string $note, string $who, ?string $
             $st->execute([$barItemId]);
             $bi = $st->fetch();
             if (!$bi) return null;
+            if ($bi['type'] === 'portion') {
+                $bt = measureLoadBottle($db, (int)$bi['parent_id']);
+                return $bt ? measurePortionCost($bt, (float)$bi['portion_size']) : (float)$bi['cost_price'];
+            }
             if ($bi['type'] !== 'recipe') return (float)$bi['cost_price'];
             if (!$bi['recipe_id']) return null;
             $rc = $db->prepare('SELECT COALESCE(SUM(bri.qty * bing.cost_per_unit),0) FROM bar_recipe_ingredients bri JOIN bar_ingredients bing ON bing.id = bri.ingredient_id WHERE bri.recipe_id = ?');
@@ -528,7 +545,17 @@ function ordValidate(PDO $db, int $orderId, string $note, string $who, ?string $
                 $biStmt->execute([$bsi['barItemId']]);
                 $bi = $biStmt->fetch();
                 if (!$bi) continue;
-                if ($bi['type'] === 'direct') {
+                if ($bi['type'] === 'portion') {
+                    // pour from the open bottle, opening a sealed one when it runs short
+                    $bt = measureLoadBottle($db, (int)$bi['parent_id']);
+                    if ($bt) {
+                        $pour = (float)$bi['portion_size'] * $bsi['qty'];
+                        measureTake($db, (int)$bt['id'], $pour, $who, "Order {$order['order_number']}", $at ?: null);
+                        $pc = measurePortionCost($bt, (float)$bi['portion_size']);
+                        $db->prepare("INSERT INTO bar_movements (item_name, item_id, qty_change, type, reason, unit, order_number, unit_cost, total_cost, done_by$atCol) VALUES (?,?,?,?,?,?,?,?,?,?$atVal)")
+                           ->execute(array_merge([$bi['name'], $bi['id'], -$bsi['qty'], 'sale', "Order {$order['order_number']}: {$bsi['qty']} x {$bi['name']} (" . rtrim(rtrim(number_format($pour, 1, '.', ''), '0'), '.') . " {$bt['measure_unit']} poured)", 'pcs', $order['order_number'], $pc, round($bsi['qty'] * $pc, 2), $who], $atArg));
+                    }
+                } elseif ($bi['type'] === 'direct') {
                     $db->prepare('UPDATE bar_items SET stock = stock - ? WHERE id = ?')->execute([$bsi['qty'], $bi['id']]);
                     $db->prepare("INSERT INTO bar_movements (item_name, item_id, qty_change, type, reason, unit, order_number, unit_cost, total_cost, done_by$atCol) VALUES (?,?,?,?,?,?,?,?,?,?$atVal)")
                        ->execute(array_merge([$bi['name'], $bi['id'], -$bsi['qty'], 'sale', "Order {$order['order_number']}", 'pcs', $order['order_number'], $bi['cost_price'], round($bsi['qty'] * (float)$bi['cost_price'], 2), $who], $atArg));

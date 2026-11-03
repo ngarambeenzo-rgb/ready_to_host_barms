@@ -433,7 +433,7 @@ function rpStockLedger(PDO $db, array $P, string $scope = 'all'): array {
         switch ($type) {
             case 'purchase': case 'receive': case 'received': return 'purchased';
             case 'sale': return 'sold';
-            case 'auto_deduction': return 'usedInRecipes';
+            case 'auto_deduction': case 'open_bottle': return 'usedInRecipes';
             case 'void': case 'void_restore': return 'voidReturned';
             case 'refund': return 'refundReturned';
             case 'breakage': case 'waste': case 'spoilage': case 'expired': case 'damaged': return 'wasted';
@@ -1176,7 +1176,7 @@ function rpInsights(PDO $db, array $P, string $scope, array $cur, array $prev, a
 
 // ── record lists: every stock movement, kitchen ticket, cash book entry ──
 const RP_MOVE_LABELS = [
-    'purchase' => 'Bought', 'receive' => 'Bought', 'received' => 'Bought', 'sale' => 'Sold', 'auto_deduction' => 'Used in a dish',
+    'open_bottle' => 'Opened for shots', 'measure_check' => 'Open bottle check', 'purchase' => 'Bought', 'receive' => 'Bought', 'received' => 'Bought', 'sale' => 'Sold', 'auto_deduction' => 'Used in a dish',
     'void' => 'Returned (void)', 'void_restore' => 'Returned (void)', 'refund' => 'Returned (refund)',
     'breakage' => 'Broken', 'waste' => 'Wasted', 'spoilage' => 'Spoiled', 'expired' => 'Expired', 'damaged' => 'Damaged',
     'count' => 'Stock count', 'adjust' => 'Adjusted', 'adjustment' => 'Adjusted',

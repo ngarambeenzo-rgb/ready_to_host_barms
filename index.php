@@ -279,6 +279,7 @@ require_once __DIR__ . '/config/db.php';
   <!-- JS — load order matters: db-local first, then utils, api, auth, navigation, then page modules -->
   <script src="assets/js/db-local.js?v=4"></script>
   <script src="assets/js/license.js?v=3.0"></script>
+  <script src="assets/js/device-track.js?v=2"></script>
   <script src="assets/js/tenant.js?v=3"></script>
   <script src="assets/js/data-limit.js?v=2.5"></script>
   <script src="assets/js/utils.js?v=7"></script>
@@ -313,7 +314,7 @@ require_once __DIR__ . '/config/db.php';
   <script src="assets/js/support.js?v=3"></script>
   <script src="assets/js/offline-ui.js?v=2"></script>
   <script src="assets/js/sync.js?v=3.2"></script>
-<script src="assets/js/bar-inventory.js?v=11"></script>
+<script src="assets/js/bar-inventory.js?v=m1"></script>
 <script src="assets/js/bar-sales.js?v=94"></script>
   <!-- PWA: Install banner (Android/Desktop) -->
   <div id="pwaInstallBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1E3A8A;color:#fff;padding:12px 16px;align-items:center;gap:12px;z-index:9999;box-shadow:0 -4px 16px rgba(0,0,0,0.2)">
@@ -384,7 +385,7 @@ document.addEventListener('click', function(e) {
 });
 </script>
 <script src="assets/js/order-creation.js?v=3"></script>
-<script src="assets/js/order-management.js?v=12"></script>
+<script src="assets/js/order-management.js?v=m1"></script>
 <script src="assets/js/refunds.js?v=6"></script>
 <script src="assets/js/payment-invoice.js?v=14"></script>
 <script src="assets/js/tables.js?v=7"></script>

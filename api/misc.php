@@ -5,6 +5,7 @@
 //                 Manager Permissions, Dashboard stats
 // ============================================================
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/measure_lib.php';
 // every write needs the security token (blocks requests forged by other websites)
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') requireCsrf();
 
@@ -340,7 +341,12 @@ if ($action === 'void_request_approve') {
                         $biStmt->execute([$sourceId]);
                         $bi = $biStmt->fetch();
                         if ($bi) {
-                            if ($bi['type'] === 'direct') {
+                            if ($bi['type'] === 'portion') {
+                                $bt = measureLoadBottle($db, (int)$bi['parent_id']);
+                                if ($bt) measurePutBack($db, (int)$bt['id'], (float)$bi['portion_size'] * $qty, $sess['full_name'], "Order {$order['order_number']} voided");
+                                $db->prepare('INSERT INTO bar_movements (item_name,item_id,qty_change,type,reason,unit,order_number,unit_cost,total_cost,done_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
+                                   ->execute([$bi['name'], $sourceId, $qty, 'void', "Order {$order['order_number']} voided", 'pcs', $order['order_number'], $bi['cost_price'], round($qty * (float)$bi['cost_price'], 2), $sess['full_name']]);
+                            } elseif ($bi['type'] === 'direct') {
                                 $db->prepare('UPDATE bar_items SET stock = stock + ? WHERE id=?')->execute([$qty, $sourceId]);
                                 $db->prepare('INSERT INTO bar_movements (item_name,item_id,qty_change,type,reason,unit,order_number,unit_cost,total_cost,done_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
                                    ->execute([$bi['name'], $sourceId, $qty, 'void', "Order {$order['order_number']} voided", 'pcs', $order['order_number'], $bi['cost_price'], round($qty * (float)$bi['cost_price'], 2), $sess['full_name']]);
@@ -932,7 +938,7 @@ if ($action === 'report') {
     // Current stock value (what stock on hand is worth now, at average purchase cost)
     $stockValue = ['barItems' => 0.0, 'barIngredients' => 0.0, 'kitchenIngredients' => 0.0, 'itemsWithoutCost' => 0];
     foreach ([
-        'barItems'           => "SELECT COALESCE(SUM(GREATEST(stock,0) * cost_price),0) AS v, COALESCE(SUM(stock > 0 AND cost_price <= 0),0) AS nc FROM bar_items WHERE type = 'direct' AND active = 1",
+        'barItems'           => "SELECT COALESCE(SUM(GREATEST(stock,0) * cost_price + CASE WHEN bottle_size > 0 THEN GREATEST(open_amount,0) / bottle_size * cost_price ELSE 0 END),0) AS v, COALESCE(SUM(stock > 0 AND cost_price <= 0),0) AS nc FROM bar_items WHERE type = 'direct' AND active = 1",
         'barIngredients'     => "SELECT COALESCE(SUM(GREATEST(quantity,0) * cost_per_unit),0) AS v, COALESCE(SUM(quantity > 0 AND cost_per_unit <= 0),0) AS nc FROM bar_ingredients",
         'kitchenIngredients' => "SELECT COALESCE(SUM(GREATEST(quantity,0) * cost_per_unit),0) AS v, COALESCE(SUM(quantity > 0 AND cost_per_unit <= 0),0) AS nc FROM kitchen_ingredients",
     ] as $key => $sql) {

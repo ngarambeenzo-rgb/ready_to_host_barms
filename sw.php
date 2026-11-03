@@ -11,7 +11,7 @@ header('Service-Worker-Allowed: /');
 //  Handles offline caching + automatic update installation
 // ============================================================
 
-const CACHE_VERSION  = 'barms-v1.0.4';
+const CACHE_VERSION  = 'barms-v1.0.6';
 // Folder this worker was installed from: '/' on the hosting domain, '/barms/' on localhost.
 // Every path below is relative to it, so the app works in either place.
 const BASE = self.location.pathname.replace(/[^/]*$/, '');
@@ -25,6 +25,7 @@ const STATIC_FILES = [
   '/assets/css/main.css',
   '/assets/js/db-local.js',
   '/assets/js/license.js',
+  '/assets/js/device-track.js',
   '/assets/js/sync.js',
   '/assets/js/data-limit.js',
   '/assets/js/utils.js',

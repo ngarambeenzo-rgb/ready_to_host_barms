@@ -5,6 +5,7 @@
 // ============================================================
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/purchase_lib.php';
+require_once __DIR__ . '/measure_lib.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') requireCsrf();
 $action = $_REQUEST['action'] ?? '';
@@ -34,6 +35,18 @@ if ($action === 'items_list') {
         $r['stock']      = (float)$r['stock'];
         $r['min_stock']  = (float)$r['min_stock'];
         $r['active']     = (int)$r['active'];
+        $r['open_amount'] = (float)($r['open_amount'] ?? 0);
+        $r['bottle_size'] = $r['bottle_size'] !== null ? (float)$r['bottle_size'] : null;
+        $r['portion_size'] = $r['portion_size'] !== null ? (float)$r['portion_size'] : null;
+    }
+    unset($r);
+    // shots / glasses: how many can still be sold from the bottle they come from
+    $byId = []; foreach ($rows as $x) $byId[$x['id']] = $x;
+    foreach ($rows as &$r) {
+        if ($r['type'] !== 'portion') continue;
+        $bt = $byId[(int)$r['parent_id']] ?? null;
+        $r['portions_left'] = $bt ? measurePortionsLeft($bt, (float)$r['portion_size']) : 0;
+        $r['unit_cost']     = $bt ? measurePortionCost($bt, (float)$r['portion_size']) : 0;
     }
     unset($r);
     jsonOut(['ok' => true, 'data' => $rows]);
@@ -47,6 +60,12 @@ if ($action === 'item_get') {
     $item = $stmt->fetch();
     if (!$item) jsonOut(['ok' => false, 'error' => 'Not found'], 404);
     $item['cost_price'] = (float)($item['cost_price'] ?? 0);
+    foreach (['bottle_size', 'open_amount', 'empty_weight', 'density', 'portion_size'] as $k) if ($item[$k] !== null) $item[$k] = (float)$item[$k];
+    if ($item['measure_unit']) {
+        $ps = $db->prepare("SELECT id, pack_name AS name, portion_size AS size, price FROM bar_items WHERE parent_id = ? AND type = 'portion' AND active = 1 ORDER BY portion_size");
+        $ps->execute([$id]);
+        $item['portions'] = $ps->fetchAll();
+    }
     // Load recipe ingredients if recipe item
     if ($item['recipe_id']) {
         $riStmt = $db->prepare('SELECT bri.*, bi2.name AS ing_name, bi2.unit FROM bar_recipe_ingredients bri JOIN bar_ingredients bi2 ON bi2.id = bri.ingredient_id WHERE bri.recipe_id = ?');
@@ -110,6 +129,11 @@ if ($action === 'item_add') {
            ->execute([$name, $price, $costPrice, $type, $type==='direct'?$stock:0, $minStock, $active, $recipeId, $packName, $unitsPerPack]);
         $itemId = (int)$db->lastInsertId();
         $db->prepare('UPDATE bar_items SET product_type=? WHERE id=?')->execute([cleanProductType($body['productType'] ?? ''), $itemId]);
+        if (!empty($body['measure']['enabled'])) {
+            $err = measureSave($db, $itemId, $body['measure']);
+            if ($err) { $db->rollBack(); jsonOut(['ok' => false, 'error' => $err], 400); }
+            if (isset($body['measure']['openAmount']) && $body['measure']['openAmount'] !== '') $db->prepare('UPDATE bar_items SET open_amount = ? WHERE id = ?')->execute([max(0, (float)$body['measure']['openAmount']), $itemId]);
+        }
 
         if ($type === 'direct' && $stock > 0) {
                 $initialCost = round($stock * $costPrice, 2);
@@ -170,6 +194,11 @@ if ($action === 'item_update') {
         if (array_key_exists('productType', $body)) $db->prepare('UPDATE bar_items SET product_type=? WHERE id=?')->execute([cleanProductType($body['productType']), $id]);
         $db->prepare('UPDATE bar_items SET name=?,price=?,cost_price=?,type=?,min_stock=?,active=?,recipe_id=? WHERE id=?')
            ->execute([$name, $price, $costPrice, $type, $minStock, $active, $recipeId, $id]);
+        if (array_key_exists('measure', $body)) {
+            $err = measureSave($db, $id, $body['measure']);
+            if ($err) { $db->rollBack(); jsonOut(['ok' => false, 'error' => $err], 400); }
+        }
+        measureSyncPortionCosts($db, $id);
         $db->commit();
         jsonOut(['ok' => true]);
     } catch (Exception $e) { $db->rollBack(); serverFail($e); }
@@ -181,6 +210,9 @@ if ($action === 'item_delete') {
     $body = json_decode(file_get_contents('php://input'), true);
     $id   = (int)($body['id'] ?? 0);
     if (!$id) jsonOut(['ok' => false, 'error' => 'id required'], 400);
+    $ps = $db->prepare("SELECT id FROM bar_items WHERE parent_id = ? AND type = 'portion'");
+    $ps->execute([$id]);
+    foreach ($ps->fetchAll(PDO::FETCH_COLUMN) as $pid) measureRemovePortion($db, (int)$pid);
     $db->prepare('DELETE FROM bar_items WHERE id = ?')->execute([$id]);
     jsonOut(['ok' => true]);
 }
@@ -214,6 +246,7 @@ if ($action === 'item_add_stock') {
           [$packQty, $packName, $perPack] = purchasePacks($body, $qty);
           $newCost = ((max(0, (float)$item['stock']) * $item['cost_price']) + $totalCost) / max(0.001, max(0, (float)$item['stock']) + $qty);
           $db->prepare('UPDATE bar_items SET stock = ?, cost_price = ? WHERE id = ?')->execute([$newStock, $newCost, $id]);
+          measureSyncPortionCosts($db, $id);
           $db->prepare('INSERT INTO bar_movements (item_name, item_id, qty_change, type, reason, unit, supplier, reference, unit_cost, total_cost, done_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
               ->execute([$item['name'], $id, $qty, 'purchase', $note, 'pcs', $supplier ?: null, $reference ?: null, $unitCost, $totalCost, $sess['full_name']]);
           $db->prepare('INSERT INTO inventory_purchases (inventory_type, inventory_id, item_name, quantity, unit, unit_cost, total_cost, amount_paid, payment_method, pack_qty, pack_name, units_per_pack, shift_id, supplier, reference, purchase_date, recorded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
@@ -221,6 +254,60 @@ if ($action === 'item_add_stock') {
         $db->commit();
           jsonOut(['ok' => true, 'newStock' => $newStock, 'unitCost' => $newCost, 'stockValue' => round($newStock * $newCost, 2), 'purchaseTotal' => $totalCost]);
     } catch (Exception $e) { $db->rollBack(); serverFail($e); }
+}
+
+// ── CHECK THE OPEN BOTTLE (weigh it, read its level, or type what is left) ──
+if ($action === 'measure_check') {
+    requirePerm('canEditStock');
+    $body   = json_decode(file_get_contents('php://input'), true);
+    $id     = (int)($body['id'] ?? 0);
+    $method = (string)($body['method'] ?? '');
+    $value  = (float)($body['value'] ?? 0);
+    $note   = mb_substr(trim((string)($body['note'] ?? '')), 0, 120);
+    $db->beginTransaction();
+    try {
+        $b = measureLoadBottle($db, $id, true);
+        if (!$b || !$b['measure_unit'] || (float)$b['bottle_size'] <= 0) { $db->rollBack(); jsonOut(['ok' => false, 'error' => 'This item is not sold by the shot or glass'], 400); }
+        $unit = $b['measure_unit']; $size = (float)$b['bottle_size'];
+        if ($method === 'gross') {
+            $empty = (float)($b['empty_weight'] ?? 0);
+            if ($empty <= 0) { $db->rollBack(); jsonOut(['ok' => false, 'error' => 'Save the empty-bottle weight on this item first (Edit item → Weighing)'], 400); }
+            if ($value < $empty) { $db->rollBack(); jsonOut(['ok' => false, 'error' => 'That is lighter than the empty bottle. Check the weight and the empty-bottle weight.'], 400); }
+            $found = measureFromGrams($value - $empty, $unit, (float)($b['density'] ?: 0.94));
+            $how = 'weighed ' . rtrim(rtrim(number_format($value, 1, '.', ''), '0'), '.') . ' g';
+        } elseif ($method === 'level') {
+            if ($value < 0 || $value > 10) { $db->rollBack(); jsonOut(['ok' => false, 'error' => 'Level is between 0 and 10 tenths'], 400); }
+            $found = $value / 10 * $size;
+            $how = 'level ' . rtrim(rtrim(number_format($value, 1, '.', ''), '0'), '.') . '/10';
+        } elseif ($method === 'amount') {
+            if ($value < 0) { $db->rollBack(); jsonOut(['ok' => false, 'error' => 'Amount cannot be negative'], 400); }
+            $found = $value;
+            $how = 'measured';
+        } else { $db->rollBack(); jsonOut(['ok' => false, 'error' => 'Choose how you checked the bottle'], 400); }
+        $found = round(min($found, $size), 3);
+        $expected = round((float)$b['open_amount'], 3);
+        $diff = round($found - $expected, 3);
+        $perUnit = measureCostPerUnit($b);
+        $db->prepare('UPDATE bar_items SET open_amount = ? WHERE id = ?')->execute([$found, $id]);
+        $fmt = fn($n) => rtrim(rtrim(number_format($n, 1, '.', ''), '0'), '.');
+        $reason = "Open bottle check ($how): system expected {$fmt($expected)} $unit, found {$fmt($found)} $unit" . ($note ? " — $note" : '');
+        // item_id stays empty on purpose: the amount is in $unit, not in bottles, so it must not mix into the bottle count
+        $db->prepare('INSERT INTO bar_movements (item_name, item_id, qty_change, type, reason, unit, reference, unit_cost, total_cost, done_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
+           ->execute([$b['name'] . ' (open bottle)', null, $diff, 'measure_check', $reason, $unit, 'bottle:' . $id, $perUnit, round($diff * $perUnit, 2), $sess['full_name']]);
+        $db->commit();
+        $ps = $db->prepare("SELECT MIN(portion_size) FROM bar_items WHERE parent_id = ? AND type = 'portion' AND active = 1");
+        $ps->execute([$id]);
+        $small = (float)$ps->fetchColumn();
+        jsonOut(['ok' => true, 'expected' => $expected, 'found' => $found, 'diff' => $diff, 'unit' => $unit, 'value' => round($diff * $perUnit, 2),
+                 'portions' => $small > 0 ? round($diff / $small, 1) : null]);
+    } catch (Exception $e) { $db->rollBack(); serverFail($e); }
+}
+
+if ($action === 'measure_history') {
+    $id = (int)($_GET['id'] ?? 0);
+    $st = $db->prepare("SELECT qty_change, unit, reason, total_cost, done_by, created_at FROM bar_movements WHERE type = 'measure_check' AND reference = ? ORDER BY id DESC LIMIT 15");
+    $st->execute(['bottle:' . $id]);
+    jsonOut(['ok' => true, 'data' => $st->fetchAll()]);
 }
 
 // ── INGREDIENTS LIST ──────────────────────────────────────────
