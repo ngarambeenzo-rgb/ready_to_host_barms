@@ -344,7 +344,7 @@ require_once __DIR__ . '/config/db.php';
   </div>
 
   <!-- Task 24 & 52: Service worker registration + pwa.js -->
-  <script src="assets/js/pwa.js?v=4"></script>
+  <script src="assets/js/pwa.js?v=5"></script>
 <script src="assets/js/backdate.js?v=4"></script>
   <script>
     // ── INIT ──────────────────────────────────────────────────
@@ -387,7 +387,7 @@ document.addEventListener('click', function(e) {
 <script src="assets/js/order-creation.js?v=3"></script>
 <script src="assets/js/order-management.js?v=m1"></script>
 <script src="assets/js/refunds.js?v=6"></script>
-<script src="assets/js/payment-invoice.js?v=14"></script>
+<script src="assets/js/payment-invoice.js?v=15"></script>
 <script src="assets/js/tables.js?v=7"></script>
     <script src="assets/js/sales.js?v=5"></script>
     <script src="assets/js/expenses.js?v=8"></script>

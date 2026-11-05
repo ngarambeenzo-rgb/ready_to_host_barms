@@ -112,3 +112,6 @@ window.addEventListener('appinstalled', () => {
   dismissInstallBanner();
   console.log('[PWA] App was installed');
 });
+
+// The "Refresh" button on the update banner (index.php)
+function applyUpdate() { location.reload(); }

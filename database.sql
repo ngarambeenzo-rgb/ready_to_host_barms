@@ -645,7 +645,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
   `currency` varchar(10) NOT NULL DEFAULT 'RWF',
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `stock_count_days` int(11) NOT NULL DEFAULT 7,
-  `bartender_can_discount` tinyint(1) NOT NULL DEFAULT 0,
+  `bartender_can_discount` tinyint(1) NOT NULL DEFAULT 1,
   `offline_main_device` varchar(64) DEFAULT NULL,
   `offline_owner_device` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`)

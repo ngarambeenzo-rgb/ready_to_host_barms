@@ -90,7 +90,11 @@ if ($action === 'policy') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireRole(['Owner']);
         $on = !empty($body['bartenderCanDiscount']) ? 1 : 0;
-        $db->prepare('UPDATE settings SET bartender_can_discount = ?')->execute([$on]);
+        if ((int)$db->query('SELECT COUNT(*) FROM settings')->fetchColumn() === 0) {
+            $db->prepare('INSERT INTO settings (bartender_can_discount) VALUES (?)')->execute([$on]);   // no settings row yet: the switch must still stick
+        } else {
+            $db->prepare('UPDATE settings SET bartender_can_discount = ?')->execute([$on]);
+        }
         dsAudit($db, $sess, 'Bartenders ' . ($on ? 'may' : 'may not') . ' apply discounts');
         jsonOut(['ok' => true]);
     }

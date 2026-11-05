@@ -4,8 +4,10 @@
 // ============================================================
 
 function bartenderCanDiscount(PDO $db): bool {
-    try { return (bool)$db->query('SELECT bartender_can_discount FROM settings LIMIT 1')->fetchColumn(); }
-    catch (Exception $e) { return false; }
+    try {
+        $v = $db->query('SELECT bartender_can_discount FROM settings LIMIT 1')->fetchColumn();
+        return $v === false ? true : (bool)$v;   // no settings row yet = the default (allowed)
+    } catch (Exception $e) { return true; }      // column not migrated yet = the default (allowed)
 }
 
 // Owner always; managers with canGiveDiscounts; bartenders only when the Owner switched it on

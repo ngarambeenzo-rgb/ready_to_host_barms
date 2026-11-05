@@ -85,11 +85,14 @@ async function piLoadDiscounts(orderId) {
   if (!res.ok || !box) return;
   _piDiscOpts = res.data || [];
   const showRules = res.canApply && _piDiscOpts.length;
-  if (!showRules && !res.canFree) return;
+  const blocked = !res.canApply && _piDiscOpts.length;     // a discount exists for this order but this person may not use it
+  if (!showRules && !blocked && !res.canFree) return;
   box.style.display = '';
   free.style.display = res.canFree ? '' : 'none';
   document.getElementById('piDiscHint').textContent = res.canFree ? 'you are the Owner' : 'set by the Owner';
-  list.innerHTML = showRules
+  list.innerHTML = blocked
+    ? `<div class="form-hint" style="margin:0">A discount is set up for this order, but you are not allowed to apply it. Ask the Owner.</div>`
+    : showRules
     ? _piDiscOpts.map(o => `<label class="pi-drule"><input type="checkbox" value="${o.id}" onchange="piUpdateTotals()">
         <span class="pi-drule-name">${esc(o.name)}<span class="pi-drule-sub">${o.kind === 'percent' ? o.value + '% off' : fmtRWF(o.value) + ' off each'}</span></span>
         <span class="pi-drule-amt">− ${fmtRWF(o.amount)}</span></label>`).join('')
